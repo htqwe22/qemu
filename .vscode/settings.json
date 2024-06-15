@@ -6,6 +6,11 @@
         "drv_uart.h": "c",
         "mem_map.h": "c",
         "stdarg.h": "c",
-        "log.h": "c"
-    }
+        "log.h": "c",
+        "drv_pl011.h": "c",
+        "arch64_common.h": "c",
+        "aarch64_common.h": "c",
+        "utils_def.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
 }

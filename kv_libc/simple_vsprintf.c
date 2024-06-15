@@ -10,7 +10,7 @@
 
 #include "simple_vsprintf.h"
 
-#include <stdarg.h>
+//#include <stdarg.h>
 #include <stddef.h>
 
 #define get_num_va_args(_args, _lcount)	 (_lcount > 1)  ?  	va_arg(_args, long long int):	\
@@ -275,6 +275,7 @@ loop:
 	}
 	*str = 0;
 	return str - buf;
+	return 0;	
 }
 
 

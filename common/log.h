@@ -11,7 +11,7 @@
 #ifndef KV_DV_LOG_H
 #define KV_DV_LOG_H
 
-#include <stdio.h>
+//#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -68,8 +68,8 @@ extern int kv_printf(const char *format, ...);
 
 #define LOG_DEBUG(fmt, ...) 	if ((LOG_LVL_DEBUG) <= g_log_level) kv_printf("[%s:%d][%s]" fmt,  _basename(__FILE__), __LINE__, "D", ##__VA_ARGS__);
 #define LOG_INFO(fmt, ...) 		if ((LOG_LVL_INFO) <= g_log_level) kv_printf("[%s:%d][%s]" fmt,  _basename(__FILE__), __LINE__, "I", ##__VA_ARGS__);
-#define LOG_WARN(fmt, ...) 		if ((LOG_LVL_WARN) <= g_log_level) kv_printf("[%s:%d][%s]" fmt,  _basename(__FILE__), __LINE__, "WARN", ##__VA_ARGS__);
-#define LOG_ERROR(fmt, ...) 	if ((LOG_LVL_ERR) <= g_log_level) kv_printf("[%s:%d][%s]" fmt ,  _basename(__FILE__), __LINE__, "ERR", ##__VA_ARGS__);
+#define LOG_WARN(fmt, ...) 		if ((LOG_LVL_WARN) <= g_log_level) kv_printf(COLOR_BROWN "[%s:%d][%s]" fmt COLOR_NONE,  _basename(__FILE__), __LINE__, "WARN", ##__VA_ARGS__);
+#define LOG_ERROR(fmt, ...) 	if ((LOG_LVL_ERR) <= g_log_level) kv_printf(COLOR_RED"[%s:%d][%s]" fmt COLOR_NONE ,  _basename(__FILE__), __LINE__, "ERR", ##__VA_ARGS__);
 
 
 

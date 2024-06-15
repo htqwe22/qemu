@@ -25,6 +25,10 @@ extern "C" {
 #define readl(c)	({ unsigned int  __v = __arch_getl(c); dmb(); __v; })
 #define writel(v,c)	({ unsigned int  __v = v; dmb(); __arch_putl(__v,c);})
 
+#define RO_REG  const volatile
+#define RW_REG  volatile
+#define WO_REG  volatile
+
 
 
 

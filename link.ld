@@ -4,7 +4,8 @@ ENTRY (_start)
 
 SECTIONS
 {
-    . = 0x80000;
+    /* . = 0x80000; */
+    . = 0x40000000; /* for virt board */
     .text.boot : {*(.text.boot)}
     .text : {*(.text)}
     . = ALIGN(8);

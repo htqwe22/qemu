@@ -10,13 +10,17 @@
 
 #include "main.h"
 #include "log.h"
-#include <uart/drv_uart.h>
+#include <drv_pl011.h>
+#include <aarch64_common.h>
+
+extern void asm_test(uint64_t arr[]);
 
 int main(int argc, char **argv)
 {
-    uart_init(115200);
-    LOG_DEBUG("main %02x\n", 4);
-    //TODO ...
+ //   pl011_init(0);
+ //   asm_test(arr);
+    LOG_ERROR("hello world\n");
+    LOG_WARN("kevin he\n");
 
     return 0;
 }

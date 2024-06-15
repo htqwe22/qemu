@@ -88,11 +88,13 @@ void set_debug_level(int lvl)
 		g_log_level = lvl;
 }
 
-extern void uart_send(char c);
+//extern void uart_send(char c);
+extern int pl011_putc(char ch);
+#define uart_send pl011_putc
 int kv_printf(const char *format, ...)
 {
 
-	int len;
+	int len = 0;
 	char buffer[PRINT_BUFFER_SIZE];
 	va_list va;
 

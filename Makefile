@@ -1,5 +1,5 @@
-CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-linux-10.3/bin/aarch64-none-linux-gnu-
-#CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
+#CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-linux-10.3/bin/aarch64-none-linux-gnu-
+CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
 
 
 Q ?=@
@@ -17,7 +17,7 @@ LD := $(CROSS_COMPILE)ld
 OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
 
-CFLAGS := -g -D__aarch64__ -O1 -fPIC
+CFLAGS := -g -D__aarch64__ -O1 -fPIC #-march=armv8.5-a
 CFLAGS += -Ikv_libc -Icommon -Iarch -Iarch/aarch64 -I driver
 DEPFLAGS := -MD -MP
 

@@ -12,6 +12,7 @@
 #define KV_AARCH64_COMMON_H
 #include <arch_helpers.h>
 #include <stdbool.h>
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

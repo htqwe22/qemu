@@ -18,12 +18,18 @@ extern void asm_test(uint64_t arr[]);
 int main(int argc, char **argv)
 {
     pl011_init(0);
- //   asm_test(arr);
-    uint64_t id_aa64pfr0 = read_id_aa64pfr0_el1();
-    // GIC 3 AND 4 implemented.
-    // EL0~EL3 implemented
-    LOG_ERROR("id_aa64pfr0:%016x\n", id_aa64pfr0);
-    LOG_WARN("kevin he\n");
+    //init_ddr();
+    //relocate();
+    //init_mmu();
 
+
+
+    // uint64_t id_aa64pfr0 = read_id_aa64pfr0_el1();
+    // LOG_ERROR("id_aa64pfr0:%016x\n", id_aa64pfr0);
+    
+    LOG_WARN("kevin he, cur_el %d\n", get_current_el());
+    // LOG_INFO("RVBAR_EL1: %016lx\n", read_rvbar_el1());
+    // LOG_INFO("RVBAR_EL2: %016lx\n", read_rvbar_el2());
+    LOG_INFO("RVBAR_EL3: %016lx\n", read_rvbar_el3());
     return 0;
 }

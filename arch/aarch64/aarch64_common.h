@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-
+void init_scr_el3(void);
 
 bool is_current_mmu_enable(void);
 

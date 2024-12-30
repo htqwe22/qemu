@@ -11,21 +11,12 @@
             "program": "${workspaceFolder}/main.elf",
             "args": [],
             "stopAtEntry": true,
-            "cwd": "${fileDirname}",
+            "cwd": "${workspaceFolder}",
             "environment": [],
-            "externalConsole": false,
+            "externalConsole": true,
             "MIMode": "gdb",
             "miDebuggerPath": "/home/kevin/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-gdb",
-            "miDebuggerServerAddress": "vm-0:1234",
-            // "preLaunchTask": "aarch64 start"
-            // "setupCommands": [
-            //     {
-            //         "description": "Enable pretty-printing for gdb",
-            //         "text": "-enable-pretty-printing",
-            //         "ignoreFailures": true
-            //     }
-            // ]
+            "miDebuggerServerAddress": "localhost:1234",
         }
-
     ]
 }

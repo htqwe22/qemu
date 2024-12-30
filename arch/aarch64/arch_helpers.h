@@ -14,6 +14,12 @@
 
 #include <arch.h>
 
+typedef long intptr_t;
+typedef unsigned long uintptr_t;
+
+typedef long register_t;
+typedef unsigned long u_register_t;
+
 /**********************************************************************
  * Macros which create inline functions to read or write CPU system
  * registers

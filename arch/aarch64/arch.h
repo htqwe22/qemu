@@ -803,11 +803,6 @@
 #define RMR_EL3_AA64_BIT	(U(1) << 0)
 
 /*
- * HI-VECTOR address for AArch32 state
- */
-#define HI_VECTOR_BASE		U(0xFFFF0000)
-
-/*
  * TCR definitions
  */
 #define TCR_EL3_RES1		((ULL(1) << 31) | (ULL(1) << 23))

@@ -10,7 +10,9 @@
         "drv_pl011.h": "c",
         "arch64_common.h": "c",
         "aarch64_common.h": "c",
-        "utils_def.h": "c"
+        "utils_def.h": "c",
+        "stdbool.h": "c",
+        "stdint.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

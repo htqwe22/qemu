@@ -7,7 +7,7 @@
 
 #ifndef UTILS_DEF_H
 #define UTILS_DEF_H
-#include <stdint.h>
+//#include <stdint.h>
 
 # define  U_(_x)	(_x##U)
 # define   U(_x)	U_(_x)
@@ -38,13 +38,6 @@
 #else
 #define BIT				BIT_32
 #endif
-
-
-typedef long intptr_t;
-typedef unsigned long uintptr_t;
-
-typedef long register_t;
-typedef unsigned long u_register_t;
 
 /*
  * Create a contiguous bitmask starting at bit position @l and ending at

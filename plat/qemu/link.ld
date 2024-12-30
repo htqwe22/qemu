@@ -5,9 +5,11 @@ ENTRY (_start)
 SECTIONS
 {
     /* . = 0x80000; */
-    . = 0x40000000; /* for virt board */
+    . = 0x00000000; /* for virt board */
     .text.boot : {*(.text.boot)}
     .text : {*(.text)}
+    . = ALIGN(11);
+    .vectors :{*(.vectors)}
     . = ALIGN(8);
     .rodata : { *(.rodata)}
     .data : {*(.data)}

@@ -5,7 +5,8 @@ export CROSS_COMPILE=$HOME/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
 
 debug_flag=1
 
-V=1
+PLAT=qemu
+V=0
 
 MK_PARAM="PLAT=${PLAT} DEBUG=${debug_flag} V=$V"
 

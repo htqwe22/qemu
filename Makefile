@@ -7,6 +7,7 @@ VERSION				:= ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}
 
 export TOP_DIR=$(shell pwd)
 export MAKE_TOOLS_DIR := $(TOP_DIR)/make_tools
+ARCH_DIR := $(TOP_DIR)/arch/aarch64
 PLAT_DIR = plat/$(strip $(PLAT))
 
 CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
@@ -14,7 +15,7 @@ PLAT:=$(strip $(PLAT))
 
 include ${MAKE_TOOLS_DIR}/build_macros.mk
 
-V ?= n
+V ?= 0
 ifeq ($(V),1)
 Q :=
 ECHO := echo
@@ -42,23 +43,23 @@ DEPFLAGS := -MD -MP
 #LDFLAGS :=  -Bstatic -T test.lds -v
 # or 链接时使用 $(LD) -Ttext=0xc4000000 -nostdlib test.o -o test
 LINK_FILE := $(PLAT_DIR)/link.ld
-LDFLAGS := -T$(LINK_FILE)
+LDFLAGS := -T$(LINK_FILE) -nostdlib 
 #-nostdlib 
 
 #CFLGAS += -ffunction-sections -fdata-section
 #LDFLGAS += -Wl,--gc-sections
 #C_FLAGS := $(shell find . -path "*.s4project" -prune -o -name "*.c" -print)
-
 include $(PLAT_DIR)/platform.mk
+include $(ARCH_DIR)/firmware.mk
 
 
-S_OBJS := start.o arch/aarch64/aarch64_misc.o
+S_OBJS := start.o 
 C_OBJS :=  main.o   
 CXX_OBJS := 
 
 
 OBJ_KV_LIBC := kv_libc/simple_vsprintf.o kv_libc/kv_string.o 
-OBJ_COMMON :=  common/log.o arch/aarch64/aarch64_common.o
+OBJ_COMMON :=  common/log.o 
 OBJ_DRV		:= #driver/uart/drv_uart.o
 OBJ_DRV += driver/drv_pl011.o
 

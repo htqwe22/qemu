@@ -14,14 +14,14 @@
 #include <aarch64_common.h>
 
 extern void asm_test(uint64_t arr[]);
-
+extern void mem_map_init(void);
 int main(int argc, char **argv)
 {
     pl011_init(0);
     //init_ddr();
     //relocate();
     //init_mmu();
-
+    mem_map_init();
 
 
     // uint64_t id_aa64pfr0 = read_id_aa64pfr0_el1();

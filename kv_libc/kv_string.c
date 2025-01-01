@@ -68,6 +68,7 @@ char *strrchr(const char *s, int c)
 		while(len--) {
 			if (*s == c)
 				return (char *)s;
+			s--;
 		}
 	}
 	return NULL;

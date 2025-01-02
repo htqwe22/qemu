@@ -1,10 +1,10 @@
 override CUR_MK_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 #$(warning "CUR_MK_DIR is $(CUR_MK_DIR)")
 
-override LOCAL_INCLUDES := 
+override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := aarch64_misc.o aarch64_common.o mem_map.o aarch64_mmu.o
+override LOCAL_OBJS := test_exception.o
 
 
 

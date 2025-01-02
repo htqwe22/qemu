@@ -9,6 +9,7 @@ export TOP_DIR=$(shell pwd)
 export MAKE_TOOLS_DIR := $(TOP_DIR)/make_tools
 ARCH_DIR := $(TOP_DIR)/arch/aarch64
 PLAT_DIR = plat/$(strip $(PLAT))
+TEST_DIR := $(TOP_DIR)/test
 
 CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
 PLAT:=$(strip $(PLAT))
@@ -35,7 +36,7 @@ OBJDUMP := $(CROSS_COMPILE)objdump
 
 OBJS :=
 
-CFLAGS := -g -D__aarch64__ -O1 -fPIC #-march=armv8.5-a
+CFLAGS := -g -D__aarch64__ -O1 -fno-pic #-fPIC #-march=armv8.5-a
 CFLAGS += -Ikv_libc -Icommon -Iarch -Iarch/aarch64 -I driver
 DEPFLAGS := -MD -MP
 
@@ -44,14 +45,13 @@ DEPFLAGS := -MD -MP
 # or 链接时使用 $(LD) -Ttext=0xc4000000 -nostdlib test.o -o test
 LINK_FILE := $(PLAT_DIR)/link.ld
 LDFLAGS := -T$(LINK_FILE) -nostdlib 
-#-nostdlib 
-
-#CFLGAS += -ffunction-sections -fdata-section
-#LDFLGAS += -Wl,--gc-sections
+LDFLAGS += --no-dynamic-linker -pie
+CFLGAS += -ffunction-sections -fdata-section
+#LDFLGAS += -Wl,--gc-sections -pie
 #C_FLAGS := $(shell find . -path "*.s4project" -prune -o -name "*.c" -print)
 include $(PLAT_DIR)/platform.mk
 include $(ARCH_DIR)/firmware.mk
-
+include $(TEST_DIR)/firmware.mk
 
 S_OBJS := start.o 
 C_OBJS :=  main.o   

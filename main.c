@@ -12,18 +12,22 @@
 #include "log.h"
 #include <drv_pl011.h>
 #include <aarch64_common.h>
+#include <aarch64_mmu.h>
+#include <test_exception.h>
+
 
 extern void asm_test(uint64_t arr[]);
 extern void mem_map_init(void);
+
 int main(int argc, char **argv)
 {
+    //clock init ...
     pl011_init(0);
     //init_ddr();
     //relocate();
     //init_mmu();
-    mem_map_init();
-
-
+    //init_mmu_el3();
+    test_exception();
     // uint64_t id_aa64pfr0 = read_id_aa64pfr0_el1();
     // LOG_ERROR("id_aa64pfr0:%016x\n", id_aa64pfr0);
     

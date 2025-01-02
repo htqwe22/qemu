@@ -43,9 +43,15 @@ master:
     bl disable_mmu_el3
 
     // set SP before go to C functions.
-    mov sp, #0xC0000000 // for virt board point at the EOF 2G ddr
-    
+    mov sp, #0xC0000000 // for virt board point at the EOF 2G ddr (0x40000000 + 0x80000000)
+    mov x7, #0xb0000000
+    msr sp_el2, x7
+    mov x7, #0xa0000000
+    msr sp_el1, x7
+    mov x7, #0x80000000
+    msr sp_el0, x7
     bl init_scr_el3
+    msr SPSel, 1  // support use immediate data .
     bl main
 
     b proc_hang

@@ -3,7 +3,7 @@ override CUR_MK_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 override LOCAL_INCLUDES := include
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := exceptions_el3.o exception_el3_handler.o
+override LOCAL_OBJS := exceptions_el3.o
 
 
 

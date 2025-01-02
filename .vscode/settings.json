@@ -12,7 +12,9 @@
         "aarch64_common.h": "c",
         "utils_def.h": "c",
         "stdbool.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "aarch64_mmu.h": "c",
+        "test_exception.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

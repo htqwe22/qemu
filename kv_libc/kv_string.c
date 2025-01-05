@@ -32,6 +32,7 @@ void *memset(void *s, int c, size_t n)
 		while(n--)
 			*ptr++ = *s++;
 	}
+	return dest;
  }
 
 int memcmp(const void *s1, const void *s2, size_t n)
@@ -119,6 +120,89 @@ static const char *charlist = "0123456789ABCDEF";
 #endif
 
 
+
+int strlen2(const char *str)
+{
+	int len = 0;
+	if (str) {
+		while(*str++)
+			len++;
+	}
+	return len;
+}
+
+
+unsigned long strtoul2(const char *str, char **endptr, int base) 
+{
+    unsigned long result = 0;
+    int digit;
+
+    // 跳过前导空白字符
+    // while (isspace(*str)) {
+    //     str++;
+    // }
+
+    // // 检查可选的加号或减号
+    // if (*str == '+' || *str == '-') {
+    //     str++;
+    // }
+
+    // 确定基数
+    if (base == 0) {
+        if (str[0] == '0') {
+            if (str[1] == 'x' || str[1] == 'X') {
+                base = 16;
+                str += 2;
+            } else {
+                base = 8;
+            }
+        } else {
+			base = 10;
+			const char *ptr = str;
+			for ( ; *ptr; ptr++) {
+				if (*ptr >= '0' && *ptr <= '9'){
+					continue;
+				}
+				if ( (*ptr >= 'a' && *ptr <= 'f') || (*ptr >= 'A' && *ptr <= 'F')) {
+					base = 16;
+					break;
+				}
+				else {
+					break;
+				}
+			}
+        }
+    } else if (base == 16) {
+        if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+            str += 2;
+        }
+    }
+
+    // 转换字符串
+    while (*str) {
+        if (*str >= '0' && *str <= '9') {
+            digit = *str - '0';
+        } else if (*str >= 'a' && *str <= 'f'){
+            digit = *str - 'a' + 10;
+        } else if (*str >= 'A' && *str <= 'F') {
+			digit = *str - 'A' + 10;
+		}else {
+            break;
+        }
+
+        if (digit >= base) {
+            break;
+        }
+        result = result * base + digit;
+        str++;
+    }
+
+    if (endptr) {
+        *endptr = (char *)str;
+    }
+    return result;
+}
+
 /*return real bin length*/
 int hex_string_to_bin(unsigned char *binbuf, int binbuff_size, const char *hexstr, int hexstr_len)
 {
@@ -198,6 +282,36 @@ char *strchr2(const char *origin, int origin_len, char needle)
 			return (char *)origin +i;
 	}
 	return NULL;
+}
+
+int strcmp2(const char *s1, const char * s2)
+{
+	int ret;
+	// if (s1 == s2)
+	// 	return 0;
+	if (s1 && s2) {
+		while (*s1 && ((ret = *s1 - *s2) == 0)) {
+			s1++;
+			s2++;
+		}
+		return *s1 - *s2;
+	}
+	return -1;
+}
+
+int memcmp2(const void *s1, const void *s2, int n)
+{
+	const uint8_t *ptr = (const uint8_t *)s1;
+	const uint8_t *s = (const uint8_t *)s2;
+	int ret;
+	if (s1 && s2) {
+		while (n-- > 0 && ((ret = *ptr - *s) == 0)) {
+			ptr++;
+			s++;
+		}
+		return ret;
+	}
+	return -1;
 }
 
 char *strrcmp(const char *origin, int origin_len, const char *needle)
@@ -332,7 +446,7 @@ uint32_t bytes_to_uint32(const uint8_t bytes[4], uint8_t littleendian)
 	return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | bytes[3];
 }
 
-uint16_t bytes_to_uint16(const     uint8_t bytes[2], uint8_t littleendian)
+uint16_t bytes_to_uint16(const uint8_t bytes[2], uint8_t littleendian)
 {
 	if (littleendian) {
 		return (bytes[1] << 8) | bytes[0];

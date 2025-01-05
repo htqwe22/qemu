@@ -14,7 +14,10 @@
         "stdbool.h": "c",
         "stdint.h": "c",
         "aarch64_mmu.h": "c",
-        "test_exception.h": "c"
+        "test_exception.h": "c",
+        "kv_string.h": "c",
+        "type_traits": "cpp",
+        "cstdarg": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

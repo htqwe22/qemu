@@ -15,6 +15,7 @@ CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
 PLAT:=$(strip $(PLAT))
 
 include ${MAKE_TOOLS_DIR}/build_macros.mk
+include $(MAKE_TOOLS_DIR)/build_flags.mk
 
 V ?= 0
 ifeq ($(V),1)
@@ -36,7 +37,10 @@ OBJDUMP := $(CROSS_COMPILE)objdump
 
 OBJS :=
 
-CFLAGS := -g -D__aarch64__ -O1 -fno-pic #-fPIC #-march=armv8.5-a
+CFLAGS += -DBUILD_MESSAGE_TIMESTAMP='__TIME__", "__DATE__'
+CFLAGS += -g -D__aarch64__ -fno-pic #-O1 -fPIC #-march=armv8.5-a
+
+#CFLAGS += -Wall -Wno-unused-function -Wno-unused-variable -Wunreachable-code -Wno-format-truncation -Wint-to-pointer-cast
 CFLAGS += -Ikv_libc -Icommon -Iarch -Iarch/aarch64 -I driver
 DEPFLAGS := -MD -MP
 
@@ -59,7 +63,7 @@ CXX_OBJS :=
 
 
 OBJ_KV_LIBC := kv_libc/simple_vsprintf.o kv_libc/kv_string.o 
-OBJ_COMMON :=  common/log.o 
+OBJ_COMMON :=  common/log.o common/shell.o
 OBJ_DRV		:= #driver/uart/drv_uart.o
 OBJ_DRV += driver/drv_pl011.o
 

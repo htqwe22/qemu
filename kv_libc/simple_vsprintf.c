@@ -107,7 +107,7 @@ static char * put_dec(char *end, unsigned long long n)
 static char *number(char *end, unsigned long long num, int base, char locase, int width)
 {
 	char *start = end;
-	int i;
+//	int i;
 	/*
 	 * locase = 0 or 0x20. ORing digits or letters with 'locase'
 	 * produces same digits or (maybe lowercased) letters
@@ -256,8 +256,8 @@ loop:
 			goto loop;
 			
 		case '#':
-//			*str++ = '0';
-//			*str++ = 'x';
+			*str++ = '0';
+			*str++ = 'x';
 //			padn -= 2;
 			fmt++;
 			goto loop;

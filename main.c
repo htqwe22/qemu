@@ -18,6 +18,8 @@
 
 extern void asm_test(uint64_t arr[]);
 extern void mem_map_init(void);
+extern int do_shell_loop(void);
+
 
 int main(int argc, char **argv)
 {
@@ -35,5 +37,9 @@ int main(int argc, char **argv)
     // LOG_INFO("RVBAR_EL1: %016lx\n", read_rvbar_el1());
     // LOG_INFO("RVBAR_EL2: %016lx\n", read_rvbar_el2());
     LOG_INFO("RVBAR_EL3: %016lx\n", read_rvbar_el3());
+
+
+
+    do_shell_loop();
     return 0;
 }

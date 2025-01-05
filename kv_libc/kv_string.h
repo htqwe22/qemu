@@ -50,18 +50,22 @@ void delete_bytes(bytes_t bytes);
 
 int host_is_litte_endian(void);
 
+int strlen2(const char *str);
+
+int strcmp2(const char *s1, const char * s2);
+
+int memcmp2(const void *s1, const void *s2, int n);
+
+unsigned long strtoul2(const char *str, char **endptr, int base);
 
 int hex_string_to_bin(unsigned char *binbuf, int binbuff_size, const char *hexstr, int hexstr_len);
 
 /**/
 int bin_to_hex_string(char *hexstr, int hexstr_size, const unsigned char *binbuf, int binbuff_len);
 
-
 void *memmove2(void *dest, const void *src, size_t n);
 
-
 char *strstr2(const char *origin, int origin_len, const char *needle);
-
 
 void swap_byte_arr(uint8_t arr[], int arr_size);
 

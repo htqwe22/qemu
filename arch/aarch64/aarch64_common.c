@@ -18,7 +18,7 @@ void init_scr_el3(void)
     val |= SCR_EA_BIT;  //将外部的Abort和SError路由到EL3处理。不管当时是在哪个EL上执行
     
     u_register_t id_aa64pfr0 = read_id_aa64pfr0_el1();
-    if (id_aa64pfr0 & (ID_AA64PFR0_SEL2_MASK << ID_AA64PFR0_SEL2_SHIFT));
+    if (id_aa64pfr0 & (ID_AA64PFR0_SEL2_MASK << ID_AA64PFR0_SEL2_SHIFT))
         val |= SCR_EEL2_BIT; // 如果S-EL2存在且使能的情况下,设置成1
     write_scr_el3(val); //写入SCR_EL3
 }

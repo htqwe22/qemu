@@ -63,7 +63,9 @@ void kv_debug_data(const char *name, const unsigned char *data, int len)
 		for (i = 0; i < len; i++)
 		{
 			if ((i & 0x1f) == 0)
-				kv_printf("\n");
+				kv_printf("\n%04x:", i);
+			if ((i & 0x1f) == 0xf)
+				kv_printf(" ");
 			kv_printf("%02X ", data[i]);
 		}
 		kv_printf("\n");

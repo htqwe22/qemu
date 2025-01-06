@@ -153,6 +153,15 @@ void el3_exception_handler(uint64_t offset)
 }
 
 
+void test1(void)
+{
+    uint64_t FP;
+    LOG_DEBUG("this is test 1\n");
+    extern void debug_callstack(void *fp);
+    asm volatile ("mov %0, fp\n" : "=r" (FP));
+    debug_callstack((void *)FP);
+    // using ./sh addr CALL1 CALL2 CALL3 ...
+}
 
 
 
@@ -162,8 +171,10 @@ void test_exception(void)
     uint8_t data[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     write_vbar_el3((u_register_t)el3_exceptions);
     write_daifclr(0xf); 
+    test1();
     uint64_t *ptr = (uint64_t *)(data + 2);
     *ptr = 0x123456789abcdef0;
-    kv_debug_data("data", data, 12);
+    
+ //   kv_debug_data("data", data, 12);
 }
 

@@ -17,7 +17,8 @@
         "test_exception.h": "c",
         "kv_string.h": "c",
         "type_traits": "cpp",
-        "cstdarg": "c"
+        "cstdarg": "c",
+        "stack_frame.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

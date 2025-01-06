@@ -21,6 +21,18 @@ function dumpdts
 }
 
 
+function address2line
+{
+    ${CROSS_COMPILE}addr2line -e main.elf $* -fipC
+    #
+    #-f：显示函数名
+    #-i：如果地址是内联函数的地址，则输出最近的非内联函数的信息
+    #-p：使输出更加人性化，每个地址的信息都打印在一行上
+    #-s：仅显示文件名的基名，不显示完整路径
+    #-C：将低级别的符号名解码为用户级别的名字
+
+}
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         release)
@@ -52,6 +64,10 @@ while [[ $# -gt 0 ]]; do
         make ${MK_PARAM} memmap
         shift
         ;;
+        addr)
+        address2line $*
+        break
+        ;;
         *)
         make help
         shift
@@ -59,3 +75,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+#debug memory in vscode using gdb command 
+# format -exec <command>; for example debug 0x600000d with 8word(8) using hex(x) with word(w) uinit
+# -exec x/8xw 0x600000d

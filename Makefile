@@ -137,4 +137,13 @@ dumpdts:
 	$(Q)dtc -I dtb -O dts board.dtb -o board.dts
 -include $(DEPS)
 
+# 以下是将链接脚本汇编文件转换为链接脚本的方法
+#$(LINKERFILE): $(LINKERFILE_SRC)
+#	$(Q)$(CC) $(COMMON_FLAGS) $(INCLUDES) -P -E -D__LINKER__ -MMD -MF $@.d -MT $@ -o $@ $<
+#	$$(Q)$($(ARCH)-cpp) -E $$(CPPFLAGS) $(BL_CPPFLAGS) $(TF_CFLAGS_$(ARCH)) -P -x assembler-with-cpp -D__LINKER__ $(MAKE_DEP) -o $$@ $$<
+#	or gcc -E -P -x c -Iinclude/ ld.S > ld.ld
+#-E：告诉 GCC 只进行预处理操作
+#-P：防止预处理器生成行标记（#line 指令），这样生成的文件会更加干净
+#-x c：告诉编译器将输入文件视为 C 语言文件，即使它是一个汇编文件
+#-include $(LINKERFILE).d
 

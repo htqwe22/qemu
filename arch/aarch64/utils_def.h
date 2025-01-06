@@ -9,6 +9,7 @@
 #define UTILS_DEF_H
 //#include <stdint.h>
 
+
 # define  U_(_x)	(_x##U)
 # define   U(_x)	U_(_x)
 # define  UL_(_x)	(_x##UL)
@@ -20,10 +21,16 @@
 # define  LL_(_x)	(_x##LL)
 # define  LL(_x)	LL_(_x)
 
+#ifndef _K
+#define _K   (1024UL)
+#define _M   (_K * _K)
+#define _G   (1024 * _M)
+#endif
 
+#ifndef ARRAY_SIZE
 /* Compute the number of elements in the given array */
-#define ARRAY_SIZE(a)				\
-	(sizeof(a) / sizeof((a)[0]))
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+#endif	
 
 #define IS_POWER_OF_TWO(x)			\
 	(((x) & ((x) - 1)) == 0)

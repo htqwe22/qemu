@@ -11,6 +11,7 @@
 #include "test_exception.h"
 #include <arch_helpers.h>
 #include "log.h"
+extern void debug_callstack(void *fp);
 
 //extern uint64_t el3_exceptions[];
 extern struct exception_entry el3_exceptions[4];
@@ -142,14 +143,34 @@ static inline void excep_info(uint64_t offset)
     debug_xn(x30);
 
     kv_debug_raw(LOG_LVL_INFO, COLOR_NONE);
-//    write_elr_el3(elr + 4);
 }
 
-
-void el3_exception_handler(uint64_t offset)
+void exception_sync_handler(uint64_t offset)
 {
+    uint64_t FP;
+    asm volatile ("mov %0, fp\n" : "=r" (FP));
     excep_info(offset);
-    asm volatile ("b .");
+    debug_callstack((void *)FP);
+    write_elr_el3(read_elr_el3() + 4);
+//    asm volatile ("b .");
+}
+
+void exception_irq_fiq_handler(uint64_t offset)
+{
+    uint64_t FP;
+    asm volatile ("mov %0, fp\n" : "=r" (FP));
+    excep_info(offset);
+    debug_callstack((void *)FP);
+    excep_info(offset);
+}
+
+void exception_serror_handler(uint64_t offset)
+{
+    uint64_t FP;
+    asm volatile ("mov %0, fp\n" : "=r" (FP));
+    excep_info(offset);
+    debug_callstack((void *)FP);
+    excep_info(offset);
 }
 
 
@@ -157,7 +178,6 @@ void test1(void)
 {
     uint64_t FP;
     LOG_DEBUG("this is test 1\n");
-    extern void debug_callstack(void *fp);
     asm volatile ("mov %0, fp\n" : "=r" (FP));
     debug_callstack((void *)FP);
     // using ./sh addr CALL1 CALL2 CALL3 ...
@@ -171,7 +191,6 @@ void test_exception(void)
     uint8_t data[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     write_vbar_el3((u_register_t)el3_exceptions);
     write_daifclr(0xf); 
-    test1();
     uint64_t *ptr = (uint64_t *)(data + 2);
     *ptr = 0x123456789abcdef0;
     

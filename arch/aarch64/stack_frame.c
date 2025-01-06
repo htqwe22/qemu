@@ -21,11 +21,11 @@ const struct stack_frame *get_prev_frame(const struct stack_frame *fp)
 void debug_callstack(void *fp)
 {
     const struct stack_frame *frame = (const struct stack_frame *)fp;
-    while (frame->fp > frame && (((uint64_t)frame->fp) & 0xf) == 0) {
+    do {
         kv_debug_raw(LOG_LVL_INFO, "fp: %p\n", frame->fp);
         kv_debug_raw(LOG_LVL_INFO, "call from: %#lx\n", (uint64_t)frame->lr -4);
         frame = frame->fp;
-    }
+    } while (frame->fp != (void *)0);
     kv_debug_raw(LOG_LVL_INFO, "fp: %p\n", frame->fp);
     kv_debug_raw(LOG_LVL_INFO, "call from: %#lx\n", (uint64_t)frame->lr -4);
 }

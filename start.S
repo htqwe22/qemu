@@ -52,6 +52,7 @@ master:
     msr sp_el0, x7
     bl init_scr_el3
     msr SPSel, 1  // support use immediate data .
+    mov x29, xzr
     bl main
 
     b proc_hang

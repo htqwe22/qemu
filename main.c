@@ -21,6 +21,17 @@ extern void mem_map_init(void);
 extern int do_shell_loop(void);
 
 
+void add(uint64_t a, uint64_t b)
+{
+    uint64_t a1, a2, a3, a4, a5;
+    a1 = a + b;
+    a2 = a *b;
+    a3 = a / b;
+    a4 = a & b;
+    a5 = a1 + a2 + a3 + a4;
+    return a5;
+}
+
 int main(int argc, char **argv)
 {
     //clock init ...
@@ -29,6 +40,8 @@ int main(int argc, char **argv)
     //relocate();
     //init_mmu();
     //init_mmu_el3();
+
+    add(0x1000, 0x1001);
     test_exception();
     // uint64_t id_aa64pfr0 = read_id_aa64pfr0_el1();
     // LOG_ERROR("id_aa64pfr0:%016x\n", id_aa64pfr0);

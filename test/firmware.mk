@@ -4,7 +4,7 @@ override CUR_MK_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := test_exception.o
+override LOCAL_OBJS := test_exception.o el_switch_test.o
 
 
 

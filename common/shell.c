@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <kv_string.h>
 #include "log.h"
+#include <arch_helpers.h>
 
 /*******************************************************************/
 
@@ -39,7 +40,8 @@ static void send_cr(int argc, char * const argv[]);
 static void do_mem_show(int argc, char * const argv[]);
 static void do_go(int argc, char * const argv[]);
 static void do_reboot(int argc, char * const argv[]);
-
+static void do_read_el(int argc, char * const argv[]);
+static void do_reg_ops(int argc, char * const argv[]);
 
 cmd_list_t cmdlist_arr[] = 
 {
@@ -47,6 +49,8 @@ cmd_list_t cmdlist_arr[] =
 //	{"help", print_help},
 //	{"xmodem", do_xmodem},
 	{"dump", do_mem_show},
+	{"reg", do_reg_ops},
+	{"read_el", do_read_el},
 	{"go", do_go},
 	{"reboot", do_reboot},
 };
@@ -170,6 +174,12 @@ static void do_reboot(int argc, char * const argv[])
 	while(1)
 	{
 	}
+}
+
+static void do_read_el(int argc, char * const argv[])
+{
+	uint64_t el = get_current_el();
+	console_printf("current EL:%d\n", el);
 }
 
 

@@ -14,23 +14,13 @@
 #include <aarch64_common.h>
 #include <aarch64_mmu.h>
 #include <test_exception.h>
+#include <el_switch_test.h>
 
 
 extern void asm_test(uint64_t arr[]);
 extern void mem_map_init(void);
 extern int do_shell_loop(void);
-
-
-void add(uint64_t a, uint64_t b)
-{
-    uint64_t a1, a2, a3, a4, a5;
-    a1 = a + b;
-    a2 = a *b;
-    a3 = a / b;
-    a4 = a & b;
-    a5 = a1 + a2 + a3 + a4;
-    return a5;
-}
+extern struct exception_entry el3_exceptions[4];
 
 int main(int argc, char **argv)
 {
@@ -40,18 +30,17 @@ int main(int argc, char **argv)
     //relocate();
     //init_mmu();
     //init_mmu_el3();
+ //   test_exception();
 
-    add(0x1000, 0x1001);
-    test_exception();
-    // uint64_t id_aa64pfr0 = read_id_aa64pfr0_el1();
-    // LOG_ERROR("id_aa64pfr0:%016x\n", id_aa64pfr0);
-    
     LOG_WARN("kevin he, cur_el %d\n", get_current_el());
     // LOG_INFO("RVBAR_EL1: %016lx\n", read_rvbar_el1());
     // LOG_INFO("RVBAR_EL2: %016lx\n", read_rvbar_el2());
     LOG_INFO("RVBAR_EL3: %016lx\n", read_rvbar_el3());
-
-
+    LOG_INFO("id_aa64pfr0:%016x\n", read_id_aa64pfr0_el1());
+     asm volatile ("msr SPSel, #0");
+    LOG_INFO("SCR_EL3: %016lx, daif %x\n", read_scr_el3(), read_daif());
+    
+    switch_to_el2(el2_entry, NULL);
 
     do_shell_loop();
     return 0;

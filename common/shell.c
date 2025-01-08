@@ -41,7 +41,6 @@ static void do_mem_show(int argc, char * const argv[]);
 static void do_go(int argc, char * const argv[]);
 static void do_reboot(int argc, char * const argv[]);
 static void do_read_el(int argc, char * const argv[]);
-static void do_reg_ops(int argc, char * const argv[]);
 
 cmd_list_t cmdlist_arr[] = 
 {
@@ -49,7 +48,6 @@ cmd_list_t cmdlist_arr[] =
 //	{"help", print_help},
 //	{"xmodem", do_xmodem},
 	{"dump", do_mem_show},
-	{"reg", do_reg_ops},
 	{"read_el", do_read_el},
 	{"go", do_go},
 	{"reboot", do_reboot},

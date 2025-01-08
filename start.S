@@ -9,12 +9,6 @@
 .global asm_test
 .global proc_hang
 
-//.global bss_begin
-//.global bss_end
-//.global data_begin
-//.global data_end
-
-
 _start:
     mrs x0, mpidr_el1
     and x0, x0, #0xFF
@@ -44,13 +38,18 @@ master:
     bl disable_mmu_el3
 
     // set SP before go to C functions.
-    mov sp, #0xC0000000 // for virt board point at the EOF 2G ddr (0x40000000 + 0x80000000)
-    mov x7, #0xb0000000
+    ldr x7, =STACK_BASE
+    mov sp, x7
+
+    sub x7, x7, STACK_SIZE
     msr sp_el2, x7
-    mov x7, #0xa0000000
+
+    sub x7, x7, STACK_SIZE
     msr sp_el1, x7
-    mov x7, #0x80000000
+
+    sub x7, x7, STACK_SIZE
     msr sp_el0, x7
+
     bl init_scr_el3
     msr SPSel, 1  // support use immediate data .
     mov x29, xzr

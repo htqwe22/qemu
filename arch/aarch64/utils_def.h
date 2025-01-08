@@ -21,11 +21,6 @@
 # define  LL_(_x)	(_x##LL)
 # define  LL(_x)	LL_(_x)
 
-#ifndef _K
-#define _K   (1024UL)
-#define _M   (_K * _K)
-#define _G   (1024 * _M)
-#endif
 
 #ifndef ARRAY_SIZE
 /* Compute the number of elements in the given array */

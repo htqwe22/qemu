@@ -41,7 +41,7 @@ CFLAGS += -DBUILD_MESSAGE_TIMESTAMP='__TIME__", "__DATE__'
 CFLAGS += -g -D__aarch64__ -fno-pic #-O1 -fPIC #-march=armv8.5-a
 
 #CFLAGS += -Wall -Wno-unused-function -Wno-unused-variable -Wunreachable-code -Wno-format-truncation -Wint-to-pointer-cast
-CFLAGS += -Ikv_libc -Icommon -I driver
+CFLAGS += -Ikv_libc -Icommon -Iplat -Idriver
 DEPFLAGS := -MD -MP
 
 #CFLAGS := -fno-builtin -Wall -Wstrict-prototypes -fno-stack-protector -fno-common -nostdinc -static -fPIC

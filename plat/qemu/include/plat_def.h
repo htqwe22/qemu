@@ -10,17 +10,24 @@
 
 #ifndef KV_PLAT_DEF_H
 #define KV_PLAT_DEF_H
-//#include <utils_def.h>
+#include <plat_common.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+
 
 
 /*
  * Platform memory map
  */
 #define PLAT_DDR_BASE		0x40000000
-#define PLAT_DDR_SIZE		G(1)
+#define PLAT_DDR_SIZE		2*G
+
+#define STACK_SIZE          M
+#define STACK_BASE          (PLAT_DDR_BASE + 4 * STACK_SIZE)
+
 
 
 /*

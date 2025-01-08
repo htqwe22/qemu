@@ -17,6 +17,8 @@ SECTIONS
     . = ALIGN(8);
     .rodata : { *(.rodata)}
     .data : {*(.data)}
+    . = ALIGN(8);
+
 
     . = ALIGN(8);
     .rela.dyn : {

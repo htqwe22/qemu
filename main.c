@@ -21,6 +21,8 @@ extern void asm_test(uint64_t arr[]);
 extern void mem_map_init(void);
 extern int do_shell_loop(void);
 extern struct exception_entry el3_exceptions[4];
+extern int image_end;
+extern int bss_begin;
 
 int main(int argc, char **argv)
 {
@@ -37,10 +39,9 @@ int main(int argc, char **argv)
     // LOG_INFO("RVBAR_EL2: %016lx\n", read_rvbar_el2());
     LOG_INFO("RVBAR_EL3: %016lx\n", read_rvbar_el3());
     LOG_INFO("id_aa64pfr0:%016x\n", read_id_aa64pfr0_el1());
-     asm volatile ("msr SPSel, #0");
     LOG_INFO("SCR_EL3: %016lx, daif %x\n", read_scr_el3(), read_daif());
-    
-    switch_to_el2(el2_entry, NULL);
+    LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
+ //   switch_to_el1(el1_entry, NULL);
 
     do_shell_loop();
     return 0;

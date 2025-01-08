@@ -9,6 +9,7 @@ SECTIONS
 {
     /* . = 0x80000; */
     . = 0x00000000; /* for virt board */
+    image_start = .;
     .text.boot : {*(.text.boot)}
     .text : {*(.text)}
     . = ALIGN(11);
@@ -16,7 +17,15 @@ SECTIONS
     . = ALIGN(8);
     .rodata : { *(.rodata)}
     .data : {*(.data)}
+
     . = ALIGN(8);
+    .rela.dyn : {
+     __rel_dyn_start = .;
+    *(.rela*)
+    __rel_dyn_end = .;
+    }
+    . = ALIGN(8);
+    image_end = .;
     bss_begin = .;
     .bss : {*(.bss*)}
     bss_end = .;

@@ -41,7 +41,7 @@ extern "C" {
 
 #define SECURE_GPIO_BASE		0x090b0000
 #define SECURE_GPIO_SIZE		0x00001000
-#define SECURE_GPIO_POWEROFF		0
+#define SECURE_GPIO_POWEROFF	0
 #define SECURE_GPIO_RESET		1
 
 /* Load pageable part of OP-TEE 2MB above secure DRAM base */

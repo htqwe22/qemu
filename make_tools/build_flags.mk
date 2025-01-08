@@ -1,4 +1,4 @@
-CFLGAS :=
+CFLAGS :=
 # CFLAGS += -nostdinc
 # CFLAGS += -Werror
 CFLAGS += -Wall

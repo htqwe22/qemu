@@ -1,5 +1,6 @@
 
 #include <arch.h>
+#include <plat_def.h>
 .section ".text.boot"
 
 .global _start

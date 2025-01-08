@@ -5,7 +5,7 @@
 .globl	disable_mmu_el1
 .globl	disable_mmu_el2
 .globl	disable_mmu_el3
-.global switch_to_el2
+.global switch_to_el1
 .global test_print
 
 disable_mmu_el1:
@@ -57,7 +57,7 @@ disable_mmu_el3:
  * 9. CPTR寄存器
  * 10. 注意barrier的设置
 */
-switch_to_el2: // el2 not supported, use el1
+switch_to_el1: // el2 not supported, use el1
 	msr daifset, #15 // diable exceptions
 	msr elr_el3, x0  // pc
 	msr vbar_el1, x1 // vector table

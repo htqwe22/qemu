@@ -41,7 +41,7 @@ CFLAGS += -DBUILD_MESSAGE_TIMESTAMP='__TIME__", "__DATE__'
 CFLAGS += -g -D__aarch64__ -fno-pic #-O1 -fPIC #-march=armv8.5-a
 
 #CFLAGS += -Wall -Wno-unused-function -Wno-unused-variable -Wunreachable-code -Wno-format-truncation -Wint-to-pointer-cast
-CFLAGS += -Ikv_libc -Icommon -Iarch -Iarch/aarch64 -I driver
+CFLAGS += -Ikv_libc -Icommon -I driver
 DEPFLAGS := -MD -MP
 
 #CFLAGS := -fno-builtin -Wall -Wstrict-prototypes -fno-stack-protector -fno-common -nostdinc -static -fPIC
@@ -50,7 +50,7 @@ DEPFLAGS := -MD -MP
 LINK_FILE := $(PLAT_DIR)/link.ld
 LDFLAGS := -T$(LINK_FILE) -nostdlib 
 LDFLAGS += --no-dynamic-linker -pie
-CFLGAS += -ffunction-sections -fdata-section
+CFLAGS += -ffunction-sections -fdata-sections
 #LDFLGAS += -Wl,--gc-sections -pie
 #C_FLAGS := $(shell find . -path "*.s4project" -prune -o -name "*.c" -print)
 include $(PLAT_DIR)/platform.mk
@@ -78,7 +78,6 @@ M ?= virt
 #########################################################################
 # THE ORDER Bellow is very important. the first is the entrance
 
-CFLAGS += $(PLAT_CFLAGS)
 OBJS += $(S_OBJS) $(C_OBJS) $(CXX_OBJS)
 DEPS := $(OBJS:%.o=%.d)
  
@@ -131,7 +130,7 @@ debug:
 #	$(Q)qemu-system-aarch64 -machine  $(M),gic-version=3,secure=on,virtualization=on -cpu neoverse-n2 -nographic -smp 1 -m 2G -kernel main.elf -S -s
 
 dumpdtb:
-	$(Q)qemu-system-aarch64 -machine  $(M),gic-version=3,secure=on,virtualization=on,dumpdtb=board.dtb -cpu neoverse-n2 -nographic -smp 4 -m 2G
+	$(Q)qemu-system-aarch64 -machine  $(M),gic-version=3,secure=on,virtualization=on,dumpdtb=board.dtb -cpu cortex-a55 -nographic -smp 1 -m 2G
 
 dumpdts:
 	$(Q)dtc -I dtb -O dts board.dtb -o board.dts

@@ -15,9 +15,9 @@
 extern "C" {
 #endif
 
-void el2_entry(void);
+void el1_entry(void);
 
-void switch_to_el2(void *enter_point, void *vector_table);
+void switch_to_el1(void *enter_point, void *vector_table);
 
 
 

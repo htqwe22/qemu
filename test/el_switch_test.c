@@ -14,7 +14,7 @@
 
 
 
-void el2_entry(void)
+void el1_entry(void)
 {
     LOG_DEBUG("cur_el is %d\n", get_current_el());
 }

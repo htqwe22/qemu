@@ -15,13 +15,15 @@
 extern "C" {
 #endif
 
-
-#ifndef K
-#define K   (1024UL)
-#define M   (K * K)
-#define G   (1024 * M)
+#ifdef __LINKER__
+#define K_(x)   (x)*(1K)
+#define M_(x)   (x)*(1M)
+#define G_(x)   (x)*(1024M)
+#else
+#define K_(x)   (1024UL * (x))
+#define M_(x)   (0x100000UL *(x))
+#define G_(x)   (0x40000000UL *(x))
 #endif
-
 
 
 

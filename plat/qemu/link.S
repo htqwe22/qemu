@@ -1,10 +1,12 @@
+#include <plat_def.h>
+
 OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64")
 OUTPUT_ARCH(aarch64)
 ENTRY (_start)
 MEMORY {
     ROM(rx): ORIGIN = 0, LENGTH = 0x20000
     SRAM (rw): ORIGIN = 0x0e000000, LENGTH = 1M
-    DDR (rwx): ORIGIN = 0x40000000, LENGTH = 1024M
+    DDR (rwx): ORIGIN = MEMORY_USE_BADDR, LENGTH = MEMORY_USER_SIZE
 } 
 SECTIONS
 {

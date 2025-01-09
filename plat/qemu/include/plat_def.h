@@ -23,22 +23,24 @@ extern "C" {
  * Platform memory map
  */
 #define PLAT_DDR_BASE		0x40000000
-#define PLAT_DDR_SIZE		2*G
+#define PLAT_DDR_SIZE		G_(2)
 
-#define STACK_SIZE          M
+#define STACK_SIZE          M_(1)
 #define STACK_BASE          (PLAT_DDR_BASE + 4 * STACK_SIZE)
 
 #define TTBR_BASE	        STACK_BASE
-#define TTBR_SIZE	        (100*M)
-#define PAGE_SIZE           (4*K)
+#define TTBR_SIZE	        M_(100)
+#define PAGE_SIZE           K_(4)
 
 #define MEMORY_USE_BADDR	TTBR_BASE + TTBR_SIZE
+#define MEMORY_USER_SIZE    (PLAT_DDR_SIZE - (MEMORY_USE_BADDR - PLAT_DDR_BASE))
 
 
 
-
+#if !defined __LINKER__
 #if TTBR_BASE & 0xfff
 #error TTBR_BASE must be aligned to PAGE_SIZE
+#endif
 #endif
 
 /*

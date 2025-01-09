@@ -34,6 +34,10 @@ AS := $(CROSS_COMPILE)as
 LD := $(CROSS_COMPILE)ld
 OBJCOPY := $(CROSS_COMPILE)objcopy
 OBJDUMP := $(CROSS_COMPILE)objdump
+RM := rm -rf
+
+
+LINKERFILE_SRC := $(PLAT_DIR)/link.S
 
 OBJS :=
 
@@ -47,8 +51,8 @@ DEPFLAGS := -MD -MP
 #CFLAGS := -fno-builtin -Wall -Wstrict-prototypes -fno-stack-protector -fno-common -nostdinc -static -fPIC
 #LDFLAGS :=  -Bstatic -T test.lds -v
 # or 链接时使用 $(LD) -Ttext=0xc4000000 -nostdlib test.o -o test
-LINK_FILE := $(PLAT_DIR)/link.ld
-LDFLAGS := -T$(LINK_FILE) -nostdlib  # -nostdinc
+LINKERFILE := kv.ld
+LDFLAGS := -T$(LINKERFILE) -nostdlib  # -nostdinc
 LDFLAGS += --no-dynamic-linker -pie
 CFLAGS += -ffunction-sections -fdata-sections
 #LDFLGAS += -Wl,--gc-sections -pie
@@ -93,7 +97,7 @@ MAP_NAME := $(BIN_NAME:%.bin=%.map)
 DUMP_NAME := $(BIN_NAME:%.bin=%.asm)
 LDFLAGS += -Map=$(MAP_NAME) #--verbose
 
-$(BIN_NAME):$(OBJS) $(LINK_FILE)
+$(BIN_NAME):$(OBJS) $(LINKERFILE)
 	$(Q)$(LD) ${LDFLAGS} $(OBJS) -o $(ELFS)
 #	$(Q)$(NM) -n $(ELFS) > $(MAP_NAME)
 	$(Q)$(OBJCOPY) -S -O binary $(ELFS) $@
@@ -108,7 +112,6 @@ $(BIN_NAME):$(OBJS) $(LINK_FILE)
 #	$(Q)$(CXX) ${CFLAGS} ${DEPFLAGS} -c $< -o $@
 
 
-
 %.o:%.S
 	$(Q)$(CC) ${CFLAGS} ${DEPFLAGS} -c $< -o $@
 %.o:%.c
@@ -117,7 +120,12 @@ $(BIN_NAME):$(OBJS) $(LINK_FILE)
 	$(Q)$(CXX) ${CFLAGS} ${DEPFLAGS} -c $< -o $@
 
 clean:
-	$(Q)@rm -f $(BIN_NAME) $(OBJS) $(ELFS) $(MAP_NAME) $(DUMP_NAME) $(DEPS)
+	$(Q)$(RM) $(BIN_NAME) $(OBJS) $(ELFS) $(MAP_NAME) $(DUMP_NAME) $(DEPS)  $(LINKERFILE) $(LINKERFILE).d
+
+$(LINKERFILE):$(LINKERFILE_SRC)
+	$(Q)$(CC) $(CFLAGS) -P -E -x assembler-with-cpp -D__LINKER__ -MMD -MF $@.d -MT $@ -o $@ $<
+	#$(Q)$(CC) $(COMMON_FLAGS) $(INCLUDES) -P -E -x c -D__LINKER__ -Wp,-MD,$@.d -MT $@ -o $@ $<	
+-include $(LINKERFILE).d
 
 run:
 	$(Q)echo "please use ./b.sh run instead"
@@ -136,9 +144,10 @@ dumpdts:
 	$(Q)dtc -I dtb -O dts board.dtb -o board.dts
 -include $(DEPS)
 
+
 # 以下是将链接脚本汇编文件转换为链接脚本的方法
 #$(LINKERFILE): $(LINKERFILE_SRC)
-#	$(Q)$(CC) $(COMMON_FLAGS) $(INCLUDES) -P -E -D__LINKER__ -MMD -MF $@.d -MT $@ -o $@ $<
+#	$(Q)$(CC) $(COMMON_FLAGS) $(INCLUDES) -P -E -x c -D__LINKER__ -Wp,-MD,$@.d -MT $@ -o $@ $<
 #	$$(Q)$($(ARCH)-cpp) -E $$(CPPFLAGS) $(BL_CPPFLAGS) $(TF_CFLAGS_$(ARCH)) -P -x assembler-with-cpp -D__LINKER__ $(MAKE_DEP) -o $$@ $$<
 #	or gcc -E -P -x c -Iinclude/ ld.S > ld.ld
 #-E：告诉 GCC 只进行预处理操作

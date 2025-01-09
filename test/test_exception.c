@@ -12,7 +12,7 @@
 #include <arch_helpers.h>
 #include "log.h"
 extern void debug_callstack(void *fp);
-
+uint8_t fix_3 = 1;
 //extern uint64_t el3_exceptions[];
 extern struct exception_entry el3_exceptions[4];
 static const char *exception_type[] = {

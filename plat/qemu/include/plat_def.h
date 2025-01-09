@@ -28,7 +28,18 @@ extern "C" {
 #define STACK_SIZE          M
 #define STACK_BASE          (PLAT_DDR_BASE + 4 * STACK_SIZE)
 
+#define TTBR_BASE	        STACK_BASE
+#define TTBR_SIZE	        (100*M)
+#define PAGE_SIZE           (4*K)
 
+#define MEMORY_USE_BADDR	TTBR_BASE + TTBR_SIZE
+
+
+
+
+#if TTBR_BASE & 0xfff
+#error TTBR_BASE must be aligned to PAGE_SIZE
+#endif
 
 /*
  * Partition memory into secure ROM, non-secure DRAM, secure "SRAM",

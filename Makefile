@@ -38,7 +38,7 @@ OBJDUMP := $(CROSS_COMPILE)objdump
 OBJS :=
 
 CFLAGS += -DBUILD_MESSAGE_TIMESTAMP='__TIME__", "__DATE__'
-CFLAGS += -g -D__aarch64__ -fno-pic #-O1 -fPIC #-march=armv8.5-a
+CFLAGS += -g -D__aarch64__ #-fno-pic #-O1 -fPIC #-march=armv8.5-a
 
 #CFLAGS += -Wall -Wno-unused-function -Wno-unused-variable -Wunreachable-code -Wno-format-truncation -Wint-to-pointer-cast
 CFLAGS += -Ikv_libc -Icommon -Iplat -Idriver
@@ -48,7 +48,7 @@ DEPFLAGS := -MD -MP
 #LDFLAGS :=  -Bstatic -T test.lds -v
 # or 链接时使用 $(LD) -Ttext=0xc4000000 -nostdlib test.o -o test
 LINK_FILE := $(PLAT_DIR)/link.ld
-LDFLAGS := -T$(LINK_FILE) -nostdlib 
+LDFLAGS := -T$(LINK_FILE) -nostdlib  # -nostdinc
 LDFLAGS += --no-dynamic-linker -pie
 CFLAGS += -ffunction-sections -fdata-sections
 #LDFLGAS += -Wl,--gc-sections -pie
@@ -91,7 +91,7 @@ SRCXX := $(CXX_OBJS:%.o=%.cpp)
 ELFS := $(BIN_NAME:%.bin=%.elf)
 MAP_NAME := $(BIN_NAME:%.bin=%.map)
 DUMP_NAME := $(BIN_NAME:%.bin=%.asm)
-LDFLAGS += -Map $(MAP_NAME) 
+LDFLAGS += -Map=$(MAP_NAME) #--verbose
 
 $(BIN_NAME):$(OBJS) $(LINK_FILE)
 	$(Q)$(LD) ${LDFLAGS} $(OBJS) -o $(ELFS)

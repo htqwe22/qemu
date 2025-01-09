@@ -10,6 +10,7 @@
 
 #include "mem_map.h"
 #include <arch_helpers.h>
+#include <plat_def.h>
 #include <stdint.h>
 #include "log.h"
 /*

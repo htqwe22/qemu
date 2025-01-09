@@ -53,8 +53,15 @@ master:
     bl init_scr_el3
     msr SPSel, 1  // support use immediate data .
     mov x29, xzr
-    bl main
 
+    // copy data from LMA to VA
+    ldr x0, =_d_copy_start
+    ldr x1, = __data_rw_start
+    ldr x2, = _d_copy_end
+    sub x2, x2, x0
+    bl memcpy_64
+
+    bl main
     b proc_hang
     ret
 
@@ -83,15 +90,22 @@ memset_64:
 1:
     str  xzr, [x0], #8
     subs x2, x2, #8
-    b.cc 1b     //no overflow again ...
+    b.ne 1b     //no overflow again ...
 2:
     mov x0, x3
     ret
 
-
-
-memcpy_64:
-
+memcpy_64:    
+    mov x3, x0 //backup as return value
+    cmp x2, 0 // length
+    b.eq    2f
+1:
+    ldr  x4, [x1], #8
+    str  x4, [x0], #8
+    subs x2, x2, #8
+    b.ne 1b     // 
+2:
+    mov x0, x3
     ret
 
 

@@ -24,8 +24,10 @@ extern struct exception_entry el3_exceptions[4];
 extern int image_end;
 extern int bss_begin;
 
+
 int main(int argc, char **argv)
 {
+    
     //clock init ...
     pl011_init(0);
     //init_ddr();
@@ -41,7 +43,7 @@ int main(int argc, char **argv)
     LOG_INFO("id_aa64pfr0:%016x\n", read_id_aa64pfr0_el1());
     LOG_INFO("SCR_EL3: %016lx, daif %x\n", read_scr_el3(), read_daif());
     LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
- //   switch_to_el1(el1_entry, NULL);
+//    switch_to_el1(el1_entry, NULL);
 
     do_shell_loop();
     return 0;

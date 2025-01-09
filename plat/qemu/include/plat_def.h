@@ -35,7 +35,7 @@ extern "C" {
 #define MEMORY_USE_BADDR	TTBR_BASE + TTBR_SIZE
 #define MEMORY_USER_SIZE    (PLAT_DDR_SIZE - (MEMORY_USE_BADDR - PLAT_DDR_BASE))
 
-
+#define configTOTAL_HEAP_SIZE   M_(200)
 
 #if !defined __LINKER__
 #if TTBR_BASE & 0xfff

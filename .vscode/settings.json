@@ -18,7 +18,10 @@
         "kv_string.h": "c",
         "type_traits": "cpp",
         "cstdarg": "c",
-        "stack_frame.h": "c"
+        "stack_frame.h": "c",
+        "heap_4.h": "c",
+        "plat_def.h": "c",
+        "heap.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

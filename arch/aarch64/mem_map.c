@@ -11,7 +11,10 @@
 #include "mem_map.h"
 #include <arch_helpers.h>
 #include <plat_def.h>
+#include <aarch64_mmu.h>
 #include <stdint.h>
+#include <heap.h>
+
 #include "log.h"
 /*
  * reference registers:
@@ -57,7 +60,7 @@ uint32_t get_va_range(void)
 }
 
 
-void mem_map_init(void)
+void debug_mmu_registers(void)
 {
     uint64_t val;
     val = read_id_aa64mmfr0_el1();
@@ -95,8 +98,6 @@ void mem_map_init(void)
     
     // val = read_ttbr1_el2();
     // LOG_DEBUG("ttbr1_el2: %016lx\n", val);
-
-
     // // val = read_vtcr_el1();
     // // LOG_DEBUG("vtcr_el1: %016lx\n", val);
     // val = read_vtcr_el2();
@@ -106,5 +107,28 @@ void mem_map_init(void)
     // LOG_DEBUG("hcr_el2: %016lx\n", val);
     // val = read_scr_el3();
     // LOG_DEBUG("scr_el3: %016lx\n", val);
+}
+
+
+void mem_map_init(void)
+{
+    uint32_t cur_el = get_current_el();
+    uint32_t pa_range = get_pa_range();
+    uint32_t va_range = get_va_range();
+    LOG_INFO("Support PA bits: %d\n", pa_range);
+    LOG_INFO("Support VA bits: %d\n", va_range);
+    LOG_DEBUG("Configure MMU for EL%d\n", cur_el);
+    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
+    uint8_t *data = (uint8_t *)kv_malloc(12);
+    LOG_DEBUG("malloc at %p\n", data);
+    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
+    uint8_t *data2 = (uint8_t *)kv_malloc(35);
+    LOG_DEBUG("malloc at %p\n", data);
+    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
+
+    kv_free(data);
+    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
+    kv_free(data2);
+    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
 }
 

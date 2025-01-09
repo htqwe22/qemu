@@ -44,7 +44,7 @@ int main(int argc, char **argv)
     LOG_INFO("SCR_EL3: %016lx, daif %x\n", read_scr_el3(), read_daif());
     LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
 //    switch_to_el1(el1_entry, NULL);
-
+    mem_map_init();
     do_shell_loop();
     return 0;
 }

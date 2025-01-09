@@ -10,6 +10,7 @@ export MAKE_TOOLS_DIR := $(TOP_DIR)/make_tools
 ARCH_DIR := $(TOP_DIR)/arch/aarch64
 PLAT_DIR = plat/$(strip $(PLAT))
 TEST_DIR := $(TOP_DIR)/test
+KV_LIBC_IDR := $(TOP_DIR)/kv_libc
 
 CROSS_COMPILE ?= $(HOME)/.bin/aarch64-none-elf-10.3/bin/aarch64-none-elf-
 PLAT:=$(strip $(PLAT))
@@ -57,6 +58,7 @@ LDFLAGS += --no-dynamic-linker -pie
 CFLAGS += -ffunction-sections -fdata-sections
 #LDFLGAS += -Wl,--gc-sections -pie
 #C_FLAGS := $(shell find . -path "*.s4project" -prune -o -name "*.c" -print)
+include $(KV_LIBC_IDR)/firmware.mk
 include $(PLAT_DIR)/platform.mk
 include $(ARCH_DIR)/firmware.mk
 include $(TEST_DIR)/firmware.mk
@@ -66,13 +68,9 @@ C_OBJS :=  main.o
 CXX_OBJS := 
 
 
-OBJ_KV_LIBC := kv_libc/simple_vsprintf.o kv_libc/kv_string.o 
 OBJ_COMMON :=  common/log.o common/shell.o
-OBJ_DRV		:= #driver/uart/drv_uart.o
 OBJ_DRV += driver/drv_pl011.o
 
-
-C_OBJS += $(OBJ_KV_LIBC)
 C_OBJS += $(OBJ_COMMON)
 C_OBJS += $(OBJ_DRV)
 

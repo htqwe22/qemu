@@ -54,9 +54,7 @@ SECTIONS
     bss_end = .;
     .ddr_data (NOLOAD) : {
         . = ALIGN(4096);
-        __ttbr_range_start = .;
         *(.ddr_data*)
-        __ttbr_range_end = .;
     } > DDR
 }
 

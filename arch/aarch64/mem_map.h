@@ -10,7 +10,7 @@
 
 #ifndef KV_MEM_MAP_H
 #define KV_MEM_MAP_H
-
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +40,9 @@ extern "C" {
 
 
 
+void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs);
 
+void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs);
 
 #ifdef __cplusplus
 }

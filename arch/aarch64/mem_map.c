@@ -20,7 +20,7 @@
 
 
 
-#define TABLE_NR    128
+#define TABLE_NR    4096
 
 SECTION_PAGE
 struct page_table_4k tables[TABLE_NR];
@@ -201,7 +201,7 @@ static inline void set_page_table(int el, uint64_t va, struct page_table_4k *pgd
 }
 
 
-static void create_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs)
+void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs)
 {
     struct page_table_4k *pgd_table = NULL;
     int contiguous = 0;
@@ -246,7 +246,79 @@ static void create_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint
         }
         contiguous = 1;
     }
+    asm volatile("tlbi vmalle1is");
+    asm volatile("dsb ish");
+    asm volatile("isb");
 }
+
+
+
+void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs)
+{
+    struct page_table_4k *pgd_table = NULL;
+    int contiguous = 0;
+    pgd_table = get_page_table(el, va);
+    if (pgd_table == NULL) {
+        pgd_table = alloc_page_table();
+        set_page_table(el, va, pgd_table);
+    }
+    // get pud entry in pgd & init pgd pattern
+    for (; size >= 4096; size -= 4096) {
+        table_4k_entry_t *pgd_pattern = &pgd_table->entries[(va >> 39) & 0x1ff];
+        struct page_table_4k *next_table;
+        // Create pud table if not exist
+        if ((pgd_pattern->pgd.type & 1) == 0) {
+            // allocate a new page table
+            next_table = alloc_page_table();
+            pgd_pattern->pgd.pud_base = (uint64_t)next_table >> 12;
+            pgd_pattern->pgd.type = 0b11;
+        }
+        // now next table is pud table
+        next_table = (struct page_table_4k *)((uint64_t)pgd_pattern->pgd.pud_base << 12);
+        table_4k_entry_t *pud_pattern = &next_table->entries[(va >> 30) & 0x1ff];
+        // Create pmd table if not exist
+        if ((pud_pattern->pud.type & 1) == 0) {
+            // allocate a new page table
+            next_table = alloc_page_table();
+            pud_pattern->pud.pmd_base = (uint64_t)next_table >> 12;
+            pud_pattern->pud.type = 0b11;
+        }
+
+        next_table = (struct page_table_4k *)((uint64_t)pud_pattern->pud.pmd_base << 12);
+        table_4k_entry_t *pmd_pattern = &next_table->entries[(va >> 21) & 0x1ff];
+        // Create pte table if not exist
+        if ((pmd_pattern->pte.type & 1) == 0) {
+           // allocate a new page table
+            next_table = alloc_page_table();
+            pmd_pattern->pmd.pte_base = (uint64_t)next_table >> 12;
+            pmd_pattern->pmd.type = 0b11;
+        }
+
+        next_table = (struct page_table_4k *)((uint64_t)pmd_pattern->pmd.pte_base << 12);
+        table_4k_entry_t *pte_pattern = &next_table->entries[(va >> 12) & 0x1ff];
+     //   if ((pte_pattern->pte.type & 1) == 0)  force setting ...
+        {
+            pte_pattern->pte.type = 0b11; // page
+        }
+        pte_pattern->pte.pa_base = pa >> 12;
+        pa += 4096;
+        va += 4096;
+        pmd_pattern->value |= attrs;
+        if (contiguous) {
+            pmd_pattern->value |= (1ull << 52);
+        }
+        contiguous = 1;
+    }
+    // 刷新TLB
+    asm volatile("tlbi vmalle1is");
+    asm volatile("dsb ish");
+    asm volatile("isb");
+
+    // // 刷新数据缓存
+    // asm volatile("dc ivac, %0" : : "r" (address));
+    // asm volatile("dsb ish");
+}
+
 
 
 void mem_map_init(void)
@@ -260,11 +332,17 @@ void mem_map_init(void)
     init_mmu_elx(cur_el);
     memset_64(tables, 0, sizeof(tables));
     memset_64(aloc_flag, 0, sizeof(aloc_flag));
-    create_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, M_(2), ATTR_MEM_RO_EXE);
-    create_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
-    create_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
-    create_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
-    
+ #if 1   
+    create_2m_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, M_(2), ATTR_MEM_RO_EXE);
+    create_2m_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
+    create_2m_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
+    create_2m_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
+#else
+    create_4k_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, M_(2), ATTR_MEM_RO_EXE);
+    create_4k_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
+    create_4k_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
+    create_4k_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
+#endif
     
     LOG_INFO("MMU configure done\n");
     enable_mmu_elx(cur_el);

@@ -58,7 +58,7 @@ typedef union
     struct{
         uint64_t type       : 2;
         uint64_t rsvd       : 10;
-        uint64_t pmd_base   : 36;
+        uint64_t pte_base   : 36;
     }pmd;
     struct{
         uint64_t type       : 2;

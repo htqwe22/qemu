@@ -821,10 +821,10 @@
 /* (internal) physical address size bits in EL3/EL1 */
 #define TCR_PS_BITS_4GB		ULL(0x0)
 #define TCR_PS_BITS_64GB	ULL(0x1)
-#define TCR_PS_BITS_1TB		ULL(0x2)
+#define TCR_PS_BITS_1TB		ULL(0x2) //40 bits
 #define TCR_PS_BITS_4TB		ULL(0x3)
 #define TCR_PS_BITS_16TB	ULL(0x4)
-#define TCR_PS_BITS_256TB	ULL(0x5)
+#define TCR_PS_BITS_256TB	ULL(0x5) // 48 bits
 
 #define ADDR_MASK_48_TO_63	ULL(0xFFFF000000000000)
 #define ADDR_MASK_44_TO_47	ULL(0x0000F00000000000)
@@ -834,9 +834,9 @@
 #define ADDR_MASK_32_TO_35	ULL(0x0000000F00000000)
 
 #define TCR_RGN_INNER_NC	(ULL(0x0) << 8)
-#define TCR_RGN_INNER_WBA	(ULL(0x1) << 8)
-#define TCR_RGN_INNER_WT	(ULL(0x2) << 8)
-#define TCR_RGN_INNER_WBNA	(ULL(0x3) << 8)
+#define TCR_RGN_INNER_WBA	(ULL(0x1) << 8) //延迟写入 读取时分配缓存 写入时分配缓存
+#define TCR_RGN_INNER_WT	(ULL(0x2) << 8) //直写式 读取时分配缓存 不写入时分配缓存
+#define TCR_RGN_INNER_WBNA	(ULL(0x3) << 8) //延迟写入  读取时分配缓存 不写入时分配缓存
 
 #define TCR_RGN_OUTER_NC	(ULL(0x0) << 10)
 #define TCR_RGN_OUTER_WBA	(ULL(0x1) << 10)

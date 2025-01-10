@@ -66,7 +66,7 @@ union reg_esr
 
 void test_exception(void);
 
-
+void set_exception_table_el3(void);
 
 
 

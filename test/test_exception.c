@@ -14,7 +14,7 @@
 extern void debug_callstack(void *fp);
 uint8_t fix_3 = 1;
 //extern uint64_t el3_exceptions[];
-extern struct exception_entry el3_exceptions[4];
+extern const struct exception_entry el3_exceptions[4];
 static const char *exception_type[] = {
     "Sync",
     "IRQ",
@@ -174,6 +174,12 @@ void exception_serror_handler(uint64_t offset)
 }
 
 
+void set_exception_table_el3(void)
+{
+    write_vbar_el3((u_register_t)el3_exceptions);
+    write_daifclr(0xf); 
+}
+
 void test1(void)
 {
     uint64_t FP;
@@ -189,8 +195,7 @@ void test_exception(void)
 {  
     LOG_DEBUG("EL3 exception table at %p, size of table %lu\n", el3_exceptions, sizeof(el3_exceptions)); 
     uint8_t data[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
-    write_vbar_el3((u_register_t)el3_exceptions);
-    write_daifclr(0xf); 
+    set_exception_table_el3();
     uint64_t *ptr = (uint64_t *)(data + 2);
     *ptr = 0x123456789abcdef0;
     

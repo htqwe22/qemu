@@ -31,10 +31,11 @@ int main(int argc, char **argv)
     //clock init ...
     pl011_init(0);
     //init_ddr();
+    set_exception_table_el3();
     //relocate();
     //init_mmu();
     //init_mmu_el3();
- //   test_exception();
+    
 
     LOG_WARN("kevin he, cur_el %d\n", get_current_el());
     // LOG_INFO("RVBAR_EL1: %016lx\n", read_rvbar_el1());

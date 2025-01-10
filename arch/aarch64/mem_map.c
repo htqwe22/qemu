@@ -14,8 +14,20 @@
 #include <aarch64_mmu.h>
 #include <stdint.h>
 #include <heap.h>
-
+#include <kv_string.h>
 #include "log.h"
+#include "stack_frame.h"
+
+
+
+#define TABLE_NR    128
+
+SECTION_PAGE
+struct page_table_4k tables[TABLE_NR];
+SECTION_DDR
+char aloc_flag[TABLE_NR];
+
+
 /*
  * reference registers:
  * HCR_EL2.{E2H, TGE}
@@ -25,10 +37,9 @@
  * ID_AARCH64MMFR2_ELx
  * VTCR_EL2.T0SZ (IPA)
  * MAIR_ELx (Memory Attribute Indirection Register)
-
 */
 
-uint32_t get_pa_range(void)
+uint32_t get_fix_pa_range(void)
 {
     uint64_t val = read_id_aa64mmfr0_el1();
     // id_aa64mmfr0_el1.[3:0]
@@ -46,7 +57,7 @@ uint32_t get_pa_range(void)
     }
 }
 
-uint32_t get_va_range(void)
+uint32_t get_fix_va_range(void)
 {
     uint64_t val = read_id_aa64mmfr2_el1();
     // id_aa64mmfr2_el1.[19:16]
@@ -109,26 +120,154 @@ void debug_mmu_registers(void)
     // LOG_DEBUG("scr_el3: %016lx\n", val);
 }
 
+struct page_table_4k *alloc_page_table(void)
+{
+    int i = 0;
+    for (i = 0; i < TABLE_NR; i++) {
+        if (aloc_flag[i] == 0) {
+            aloc_flag[i] = 1;
+            return &tables[i];
+        }
+    }
+    LOG_ERROR("alloc mmu table fail\n");
+    uint64_t fp;
+    asm volatile("mov %0, x29":"=r" (fp));
+    debug_callstack((void *)fp);
+    read_actlr_el1();
+    for(;;);
+    return NULL;
+}
+
+void free_page_table(struct page_table_4k *page_tabe)
+{
+#if 0    
+    int i = 0;
+    for (i = 0; i < TABLE_NR; i++) {
+        if (&tables[i] == page_tabe) {
+            aloc_flag[i] = 0;
+            return;
+        }
+    }
+#else
+    aloc_flag[page_tabe - tables] = 0;
+#endif
+}
+
+static inline struct page_table_4k *get_page_table(int el, uint64_t va)
+{
+    struct page_table_4k *pgd_table = NULL;
+    switch(el) {
+        case 3:
+            pgd_table = (struct page_table_4k *)read_ttbr0_el3();
+            break;
+        case 2:
+            pgd_table = (struct page_table_4k *)read_ttbr0_el2();
+            break;
+        case 1:
+        case 0:
+            if (va & 0xfff0000000000000) { // va >> 52
+                pgd_table = (struct page_table_4k *)read_ttbr1_el1();
+            } else {
+                pgd_table = (struct page_table_4k *)read_ttbr0_el1();
+            }
+            break;
+        default:
+            break;
+    }
+    return pgd_table;
+}
+
+static inline void set_page_table(int el, uint64_t va, struct page_table_4k *pgd_table)
+{
+    // TODO check pgd_table != NULL
+    switch(el) {
+        case 3:
+            write_ttbr0_el3((uint64_t)pgd_table);
+            break;
+        case 2:
+            write_ttbr0_el2((uint64_t)pgd_table);
+            break;
+        case 1:
+        case 0:
+            if (va & 0xfff0000000000000) { // va >> 52
+                write_ttbr1_el1((uint64_t)pgd_table);
+            } else {
+                write_ttbr0_el1((uint64_t)pgd_table);
+            }
+            break;
+        default:
+            return;
+    }
+}
+
+
+static void create_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs)
+{
+    struct page_table_4k *pgd_table = NULL;
+    int contiguous = 0;
+    pgd_table = get_page_table(el, va);
+    if (pgd_table == NULL) {
+        pgd_table = alloc_page_table();
+        set_page_table(el, va, pgd_table);
+    }
+    // get pud entry in pgd & init pgd pattern
+    for (; size >= M_(2); size -= M_(2)) {
+        table_4k_entry_t *pgd_pattern = &pgd_table->entries[(va >> 39) & 0x1ff];
+        struct page_table_4k *next_table;
+        if ((pgd_pattern->pgd.type & 1) == 0) {
+            // allocate a new page table
+            next_table = alloc_page_table();
+            pgd_pattern->pgd.pud_base = (uint64_t)next_table >> 12;
+            pgd_pattern->pgd.type = 0b11;
+        }
+        // now next table is pud table
+        next_table = (struct page_table_4k *)((uint64_t)pgd_pattern->pgd.pud_base << 12);
+        table_4k_entry_t *pud_pattern = &next_table->entries[(va >> 30) & 0x1ff];
+        if ((pud_pattern->pud.type & 1) == 0) {
+            // allocate a new page table
+            next_table = alloc_page_table();
+            pud_pattern->pud.pmd_base = (uint64_t)next_table >> 12;
+            pud_pattern->pud.type = 0b11;
+        }
+
+        next_table = (struct page_table_4k *)((uint64_t)pud_pattern->pud.pmd_base << 12);
+        table_4k_entry_t *pmd_pattern = &next_table->entries[(va >> 21) & 0x1ff];
+        //if ((pmd_pattern->b2m.type & 1) == 0) 
+        {
+            pmd_pattern->b2m.type = 0b01; // block
+            pmd_pattern->value |= 1 << 16; // block (bit 16 block only)
+        }
+        pmd_pattern->b2m.pa_base = pa >> 21;
+        pa += M_(2);
+        va += M_(2);
+        pmd_pattern->value |= attrs;
+        if (contiguous) {
+            pmd_pattern->value |= (1ull << 52);
+        }
+        contiguous = 1;
+    }
+}
+
 
 void mem_map_init(void)
 {
     uint32_t cur_el = get_current_el();
-    uint32_t pa_range = get_pa_range();
-    uint32_t va_range = get_va_range();
+    uint32_t pa_range = get_fix_pa_range();
+    uint32_t va_range = get_fix_va_range();
     LOG_INFO("Support PA bits: %d\n", pa_range);
     LOG_INFO("Support VA bits: %d\n", va_range);
-    LOG_DEBUG("Configure MMU for EL%d\n", cur_el);
-    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
-    uint8_t *data = (uint8_t *)kv_malloc(12);
-    LOG_DEBUG("malloc at %p\n", data);
-    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
-    uint8_t *data2 = (uint8_t *)kv_malloc(35);
-    LOG_DEBUG("malloc at %p\n", data);
-    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
-
-    kv_free(data);
-    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
-    kv_free(data2);
-    LOG_DEBUG("free heap %lu\n", kv_getFreeSize());
+    LOG_DEBUG("Configuring MMU for EL%d ...\n", cur_el);
+    init_mmu_elx(cur_el);
+    memset_64(tables, 0, sizeof(tables));
+    memset_64(aloc_flag, 0, sizeof(aloc_flag));
+    create_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, M_(2), ATTR_MEM_RO_EXE);
+    create_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
+    create_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
+    create_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
+    
+    
+    LOG_INFO("MMU configure done\n");
+    enable_mmu_elx(cur_el);
 }
 
+     

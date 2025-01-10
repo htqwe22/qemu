@@ -32,10 +32,14 @@ extern "C" {
 #define TTBR_SIZE	        M_(100)
 #define PAGE_SIZE           K_(4)
 
-#define MEMORY_USE_BADDR	TTBR_BASE + TTBR_SIZE
+#define MEMORY_USE_BADDR	STACK_BASE
 #define MEMORY_USER_SIZE    (PLAT_DDR_SIZE - (MEMORY_USE_BADDR - PLAT_DDR_BASE))
 
 #define configTOTAL_HEAP_SIZE   M_(200)
+
+#define SECTION_PAGE    __attribute__((section(".page_data")))
+#define SECTION_DDR     __attribute__((section(".ddr_data")))
+
 
 #if !defined __LINKER__
 #if TTBR_BASE & 0xfff

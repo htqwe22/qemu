@@ -88,7 +88,7 @@ memset_64:
     cmp x2, 0
     b.eq    2f
 1:
-    str  xzr, [x0], #8
+    str  x1, [x0], #8
     subs x2, x2, #8
     b.ne 1b     //no overflow again ...
 2:

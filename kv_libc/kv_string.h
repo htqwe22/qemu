@@ -89,6 +89,10 @@ void uint16_to_bytes(uint16_t num, uint8_t bytes[2], uint8_t littleendian);
 void uint32_to_bytes(uint32_t num, uint8_t bytes[4], uint8_t littleendian);
 
 
+extern void *memset_64(void *s, uint64_t c, size_t n);
+
+extern void *memcpy_64(void *dest, const void *src, size_t n);
+
 #ifdef __cplusplus
 }
 #endif

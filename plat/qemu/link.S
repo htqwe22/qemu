@@ -54,6 +54,8 @@ SECTIONS
     bss_end = .;
     .ddr_data (NOLOAD) : {
         . = ALIGN(4096);
+        *(.page_data*)
+        . = ALIGN(8);
         *(.ddr_data*)
     } > DDR
 }

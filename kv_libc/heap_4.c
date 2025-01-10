@@ -55,7 +55,8 @@
 /* Assumes 8bit bytes! */
 #define heapBITS_PER_BYTE         ( ( size_t ) 8 )
 
-static uint8_t defaultHeap[ configTOTAL_HEAP_SIZE ] __attribute__((section(".ddr_data")));
+SECTION_DDR
+static uint8_t defaultHeap[ configTOTAL_HEAP_SIZE ] ;
 
 
 

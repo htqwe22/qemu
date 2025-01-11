@@ -11,11 +11,11 @@
 #ifndef KV_DV_LOG_H
 #define KV_DV_LOG_H
 
-//#include <stdio.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define LOG_ENABLE     1
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
@@ -23,17 +23,6 @@ extern "C" {
 
 
 #define PRINT_BUFFER_SIZE 200
-
-extern const char * log_lv[];
-extern const char *_basename(const char *path);
-extern int g_log_level;
-
-
-#define LOG_LVL_ERR 	1
-#define LOG_LVL_WARN	2
-#define LOG_LVL_INFO	3
-#define LOG_LVL_DEBUG	4
-
 
 #define COLOR_NONE         "\033[0m"      
 #define COLOR_RED          "\033[0;32;31m"
@@ -48,9 +37,18 @@ extern int g_log_level;
 #define COLOR_PURPLE       "\033[0;35m"   
 #define COLOR_BROWN        "\033[0;33m"   
 #define COLOR_YELLOW       "\033[5;42;33m"
-#define COLOR_WHITE        "\033[1;37m"		
+#define COLOR_WHITE        "\033[1;37m"	
 
+#define LOG_LVL_ERR 	1
+#define LOG_LVL_WARN	2
+#define LOG_LVL_INFO	3
+#define LOG_LVL_DEBUG	4
 
+#if LOG_ENABLE
+
+extern const char * log_lv[];
+extern const char *_basename(const char *path);
+extern int g_log_level;
 
 #define DEFUALT_LOG_THRESHOLD	LOG_LVL_DEBUG
 void set_debug_level(int lvl);
@@ -71,11 +69,23 @@ extern int kv_printf(const char *format, ...);
 #define LOG_WARN(fmt, ...) 		if ((LOG_LVL_WARN) <= g_log_level) kv_printf(COLOR_BROWN "[%s:%d][%s]" fmt COLOR_NONE,  _basename(__FILE__), __LINE__, "WARN", ##__VA_ARGS__);
 #define LOG_ERROR(fmt, ...) 	if ((LOG_LVL_ERR) <= g_log_level) kv_printf(COLOR_RED"[%s:%d][%s]" fmt COLOR_NONE ,  _basename(__FILE__), __LINE__, "ERR", ##__VA_ARGS__);
 
-
-
 //#define debug_str(lvl, n, str) 	if ((lvl) <= g_log_level) kv_printf("[%s][%s:%d]%.*s\n",log_lv[lvl], _basename(__FILE__), __LINE__, n + 1, str)
 
+#else
 
+#define kv_debug_data(name, data, len) {(void)name, (void)data, (void) len;}
+
+#define kv_debug_str(name, str, len) {(void)name, (void)str, (void) len;}
+
+#define set_debug_level(lvl) {(void)(lvl);}
+
+#define kv_printf(fmt, ...) {(void)fmt;}
+#define LOG_DEBUG(fmt, ...) {(void)fmt;}
+#define LOG_INFO(fmt, ...)  {(void)fmt;}
+#define LOG_WARN(fmt, ...)  {(void)fmt;}
+#define LOG_ERROR(fmt, ...) {(void)fmt;}
+#define kv_debug_raw(lvl, fmt, ...) 
+#endif
 
 
 

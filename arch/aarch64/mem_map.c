@@ -211,7 +211,7 @@ void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
         set_page_table(el, va, pgd_table);
     }
     // get pud entry in pgd & init pgd pattern
-    for (; size >= 2*MiB; size -= 2*MiB) {
+    for (; size >= 2*MB; size -= 2*MB) {
         table_4k_entry_t *pgd_pattern = &pgd_table->entries[(va >> 39) & 0x1ff];
         struct page_table_4k *next_table;
         if ((pgd_pattern->pgd.type & 1) == 0) {
@@ -238,8 +238,8 @@ void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
             pmd_pattern->value |= 1 << 16; // block (bit 16 block only)
         }
         pmd_pattern->b2m.pa_base = pa >> 21;
-        pa += 2*MiB;
-        va += 2*MiB;
+        pa += 2*MB;
+        va += 2*MB;
         pmd_pattern->value |= attrs;
         if (contiguous) {
             pmd_pattern->value |= (1ull << 52);
@@ -258,6 +258,7 @@ void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
     struct page_table_4k *pgd_table = NULL;
     int contiguous = 0;
     pgd_table = get_page_table(el, va);
+    LOG_DEBUG("map va: %016lx, pa: %016lx, size: %d\n", va, pa, size);
     if (pgd_table == NULL) {
         pgd_table = alloc_page_table();
         set_page_table(el, va, pgd_table);
@@ -301,13 +302,13 @@ void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
             pte_pattern->pte.type = 0b11; // page
         }
         pte_pattern->pte.pa_base = pa >> 12;
-        pa += 4096;
-        va += 4096;
-        pmd_pattern->value |= attrs;
+        pte_pattern->value |= attrs;
         if (contiguous) {
-            pmd_pattern->value |= (1ull << 52);
+            pte_pattern->value |= (1ull << 52);
         }
         contiguous = 1;
+        pa += 4096;
+        va += 4096;
     }
     // 刷新TLB
     asm volatile("tlbi vmalle1is");
@@ -333,21 +334,32 @@ void mem_map_init(void)
     memset_64(tables, 0, sizeof(tables));
     memset_64(aloc_flag, 0, sizeof(aloc_flag));
 
- #if 1
-    create_2m_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, 2*MiB, ATTR_MEM_RO_EXE);
-    create_2m_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
+ #if 0
+    create_2m_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, 2*MB, ATTR_MEM_RO_EXE); // for .text
+    create_2m_mapping(cur_el, SEC_SRAM_BASE, SEC_SRAM_BASE, 2*MB, ATTR_MEM_NORMAL); // for .stack
  //   create_2m_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
-    create_2m_mapping(cur_el, (uint64_t)ddr_data_start, (uint64_t)ddr_data_start, 1*GiB, ATTR_MEM_NORMAL);
-    create_2m_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
+ //   create_2m_mapping(cur_el, (uint64_t)ddr_data_start, (uint64_t)ddr_data_start, 1*GB, ATTR_MEM_NORMAL);
+    create_2m_mapping(cur_el, UART0_BASE, UART0_BASE, 2*MB, ATTR_DEV_NE);
 #else
-    create_4k_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, 2*MiB, ATTR_MEM_RO_EXE);
-    create_4k_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
-    create_4k_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
-    create_4k_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
+    create_4k_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, SEC_ROM_SIZE, ATTR_MEM_RO_EXE); // for .text
+    create_4k_mapping(cur_el, SEC_SRAM_BASE, SEC_SRAM_BASE, SEC_SRAM_SIZE, ATTR_MEM_NORMAL); // for .stack
+    create_4k_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, 512*MB, ATTR_MEM_NORMAL);
+    create_2m_mapping(cur_el, UART0_BASE, UART0_BASE, 2*MB, ATTR_DEV_NE);
 #endif
-    
+
+#if 0
+    #define TEST_SEC_BASE (SEC_DRAM_BASE + 1*MB)
+    *(uint64_t *)(TEST_SEC_BASE) = 0x12345678;
+    create_4k_mapping(cur_el, TEST_SEC_BASE, 0x200001000UL, 4*KB, ATTR_MEM_NORMAL);
+#endif
     LOG_INFO("MMU configure done\n");
     enable_mmu_elx(cur_el);
+    LOG_INFO("MMU works done\n");
+ //   LOG_DEBUG("sec dram %x\n", *(uint64_t *)(0x200001000UL));
+    #if 0 // try to map transform table
+    create_2m_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, (uint64_t)ddr_data_start - PLAT_DDR_BASE, ATTR_MEM_NORMAL);
+    LOG_INFO("can not be here\n");
+    #endif
 }
 
      

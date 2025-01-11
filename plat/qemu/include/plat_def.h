@@ -39,14 +39,14 @@ extern "C" {
  * Kevin defined memory map ...
  */
 #define PLAT_DDR_BASE		NS_DRAM0_BASE
-#define PLAT_DDR_SIZE		(2*GiB) //NS_DRAM0_SIZE
+#define PLAT_DDR_SIZE		(2*GB) //NS_DRAM0_SIZE
 
-#define STACK_SIZE          8*KiB
+#define STACK_SIZE          8*KB
 #define STACK_BASE          (SEC_SRAM_BASE + SEC_SRAM_SIZE)
 
-#define PAGE_SIZE           4094
+#define PAGE_SIZE           4096
 
-#define configTOTAL_HEAP_SIZE   (200 * MiB)
+#define configTOTAL_HEAP_SIZE   (200 * MB)
 
 /**
  * Endof Kevin defined memory map...

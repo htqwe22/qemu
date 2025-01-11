@@ -12,6 +12,8 @@
 #include <string.h>
 #include "simple_vsprintf.h"
 
+#if LOG_ENABLE
+
 int g_log_level = DEFUALT_LOG_THRESHOLD;
 
 const char * log_lv[] = 
@@ -112,3 +114,5 @@ int kv_printf(const char *format, ...)
 	}
 	return len;
 }
+
+#endif

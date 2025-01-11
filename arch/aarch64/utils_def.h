@@ -24,13 +24,13 @@
 
 
 #if defined (__LINKER__)
-#define KiB     1K
-#define MiB     1M
-#define GiB     1024M
+#define KB     1K
+#define MB     1M
+#define GB     1024M
 #else
-#define KiB     ULL(1024)
-#define MiB     ULL(0x100000)
-#define GiB     ULL(0x40000000)
+#define KB     ULL(1024)
+#define MB     ULL(0x100000)
+#define GB     ULL(0x40000000)
 #endif
 
 #ifndef ARRAY_SIZE

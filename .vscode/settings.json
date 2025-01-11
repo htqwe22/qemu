@@ -22,7 +22,9 @@
         "heap_4.h": "c",
         "plat_def.h": "c",
         "heap.h": "c",
-        "plat_common.h": "c"
+        "plat_common.h": "c",
+        "simple_vsprintf.h": "c",
+        "typeinfo": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

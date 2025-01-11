@@ -10,42 +10,14 @@
 
 #ifndef KV_PLAT_DEF_H
 #define KV_PLAT_DEF_H
-#include <plat_common.h>
+#include <utils_def.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 
-
-
-
-/*
- * Platform memory map
- */
-#define PLAT_DDR_BASE		0x40000000
-#define PLAT_DDR_SIZE		G_(2)
-
-#define STACK_SIZE          M_(1)
-#define STACK_BASE          (PLAT_DDR_BASE + 4 * STACK_SIZE)
-
-#define TTBR_BASE	        STACK_BASE
-#define TTBR_SIZE	        M_(100)
-#define PAGE_SIZE           K_(4)
-
-#define MEMORY_USE_BADDR	STACK_BASE
-#define MEMORY_USER_SIZE    (PLAT_DDR_SIZE - (MEMORY_USE_BADDR - PLAT_DDR_BASE))
-
-#define configTOTAL_HEAP_SIZE   M_(200)
-
 #define SECTION_PAGE    __attribute__((section(".page_data")))
 #define SECTION_DDR     __attribute__((section(".ddr_data")))
-
-
-#if !defined __LINKER__
-#if TTBR_BASE & 0xfff
-#error TTBR_BASE must be aligned to PAGE_SIZE
-#endif
-#endif
 
 /*
  * Partition memory into secure ROM, non-secure DRAM, secure "SRAM",
@@ -54,14 +26,32 @@ extern "C" {
 #define SEC_ROM_BASE			0x00000000
 #define SEC_ROM_SIZE			0x00020000
 
-#define NS_DRAM0_BASE			(0x40000000ULL)
-#define NS_DRAM0_SIZE			(0xc0000000ULL)
-
 #define SEC_SRAM_BASE			0x0e000000
 #define SEC_SRAM_SIZE			0x00100000
 
-#define SEC_DRAM_BASE			0x0e100000
+#define SEC_DRAM_BASE			0x0e100000  //used for far
 #define SEC_DRAM_SIZE			0x00f00000
+
+#define NS_DRAM0_BASE			0x40000000
+#define NS_DRAM0_SIZE			0xC0000000
+
+/*
+ * Kevin defined memory map ...
+ */
+#define PLAT_DDR_BASE		NS_DRAM0_BASE
+#define PLAT_DDR_SIZE		(2*GiB) //NS_DRAM0_SIZE
+
+#define STACK_SIZE          8*KiB
+#define STACK_BASE          (SEC_SRAM_BASE + SEC_SRAM_SIZE)
+
+#define PAGE_SIZE           4094
+
+#define configTOTAL_HEAP_SIZE   (200 * MiB)
+
+/**
+ * Endof Kevin defined memory map...
+*/
+
 
 #define SECURE_GPIO_BASE		0x090b0000
 #define SECURE_GPIO_SIZE		0x00001000
@@ -78,6 +68,114 @@ extern "C" {
 
 #define SHARED_RAM_BASE			SEC_SRAM_BASE
 #define SHARED_RAM_SIZE			0x00001000
+
+/*
+ * ARM-TF lives in SRAM, partition it here
+ */
+
+#define SHARED_RAM_BASE			SEC_SRAM_BASE
+#define SHARED_RAM_SIZE			0x00001000
+
+#define PLAT_QEMU_TRUSTED_MAILBOX_BASE	SHARED_RAM_BASE
+#define PLAT_QEMU_TRUSTED_MAILBOX_SIZE	(8 + PLAT_QEMU_HOLD_SIZE)
+#define PLAT_QEMU_HOLD_BASE		(PLAT_QEMU_TRUSTED_MAILBOX_BASE + 8)
+#define PLAT_QEMU_HOLD_SIZE		(PLATFORM_CORE_COUNT * \
+					 PLAT_QEMU_HOLD_ENTRY_SIZE)
+#define PLAT_QEMU_HOLD_ENTRY_SHIFT	3
+#define PLAT_QEMU_HOLD_ENTRY_SIZE	(1 << PLAT_QEMU_HOLD_ENTRY_SHIFT)
+#define PLAT_QEMU_HOLD_STATE_WAIT	0
+#define PLAT_QEMU_HOLD_STATE_GO		1
+
+#define BL_RAM_BASE			(SHARED_RAM_BASE + SHARED_RAM_SIZE)
+#define BL_RAM_SIZE			(SEC_SRAM_SIZE - SHARED_RAM_SIZE)
+
+#define TB_FW_CONFIG_BASE		BL_RAM_BASE
+#define TB_FW_CONFIG_LIMIT		(TB_FW_CONFIG_BASE + PAGE_SIZE)
+#define TOS_FW_CONFIG_BASE		TB_FW_CONFIG_LIMIT
+#define TOS_FW_CONFIG_LIMIT		(TOS_FW_CONFIG_BASE + PAGE_SIZE)
+
+/*
+ * BL1 specific defines.
+ *
+ * BL1 RW data is relocated from ROM to RAM at runtime so we need 2 sets of
+ * addresses.
+ * Put BL1 RW at the top of the Secure SRAM. BL1_RW_BASE is calculated using
+ * the current BL1 RW debug size plus a little space for growth.
+ */
+#define BL1_RO_BASE			SEC_ROM_BASE
+#define BL1_RO_LIMIT			(SEC_ROM_BASE + SEC_ROM_SIZE)
+#define BL1_RW_BASE			(BL1_RW_LIMIT - 0x12000)
+#define BL1_RW_LIMIT			(BL_RAM_BASE + BL_RAM_SIZE)
+
+/*
+ * BL2 specific defines.
+ *
+ * Put BL2 just below BL3-1. BL2_BASE is calculated using the current BL2 debug
+ * size plus a little space for growth.
+ */
+#define BL2_BASE			(BL31_BASE - 0x35000)
+#define BL2_LIMIT			BL31_BASE
+
+/*
+ * BL3-1 specific defines.
+ *
+ * Put BL3-1 at the top of the Trusted SRAM. BL31_BASE is calculated using the
+ * current BL3-1 debug size plus a little space for growth.
+ */
+#define BL31_BASE			(BL31_LIMIT - 0x60000)
+#define BL31_LIMIT			(BL_RAM_BASE + BL_RAM_SIZE - FW_HANDOFF_SIZE)
+#define BL31_PROGBITS_LIMIT		BL1_RW_BASE
+
+#if TRANSFER_LIST
+#define FW_HANDOFF_BASE			BL31_LIMIT
+#define FW_HANDOFF_LIMIT		(FW_HANDOFF_BASE + FW_HANDOFF_SIZE)
+#define FW_HANDOFF_SIZE			0x4000
+#else
+#define FW_HANDOFF_SIZE			0
+#endif
+
+
+/*
+ * BL3-2 specific defines.
+ *
+ * BL3-2 can execute from Secure SRAM, or Secure DRAM.
+ */
+#define BL32_SRAM_BASE			BL_RAM_BASE
+#define BL32_SRAM_LIMIT			BL31_BASE
+#define BL32_DRAM_BASE			SEC_DRAM_BASE
+#define BL32_DRAM_LIMIT			(SEC_DRAM_BASE + SEC_DRAM_SIZE - \
+					 RME_GPT_DRAM_SIZE)
+
+#define SEC_SRAM_ID			0
+#define SEC_DRAM_ID			1
+
+#if BL32_RAM_LOCATION_ID == SEC_SRAM_ID
+# define BL32_MEM_BASE			BL_RAM_BASE
+# define BL32_MEM_SIZE			BL_RAM_SIZE
+# define BL32_BASE			BL32_SRAM_BASE
+# define BL32_LIMIT			(BL32_SRAM_LIMIT - FW_HANDOFF_SIZE)
+#elif BL32_RAM_LOCATION_ID == SEC_DRAM_ID
+# define BL32_MEM_BASE			SEC_DRAM_BASE
+# define BL32_MEM_SIZE			SEC_DRAM_SIZE
+# define BL32_BASE			BL32_DRAM_BASE
+# define BL32_LIMIT			(BL32_DRAM_LIMIT - FW_HANDOFF_SIZE)
+#else
+# error "Unsupported BL32_RAM_LOCATION_ID value"
+#endif
+
+#if TRANSFER_LIST
+#define FW_NS_HANDOFF_BASE		(NS_IMAGE_OFFSET - FW_HANDOFF_SIZE)
+#endif
+
+#define NS_IMAGE_OFFSET			(NS_DRAM0_BASE + 0x20000000)
+#define NS_IMAGE_MAX_SIZE		(NS_DRAM0_SIZE - 0x20000000)
+
+#define PLAT_PHY_ADDR_SPACE_SIZE	(1ULL << 32)
+#define PLAT_VIRT_ADDR_SPACE_SIZE	(1ULL << 32)
+#define MAX_MMAP_REGIONS		(13 + MAX_MMAP_REGIONS_SPMC)
+#define MAX_XLAT_TABLES			(6 + MAX_XLAT_TABLES_SPMC)
+#define MAX_IO_DEVICES			4
+#define MAX_IO_HANDLES			4
 
 /*
  * PL011 related constants

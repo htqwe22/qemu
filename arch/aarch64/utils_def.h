@@ -7,20 +7,31 @@
 
 #ifndef UTILS_DEF_H
 #define UTILS_DEF_H
-//#include <stdint.h>
+
+#if defined(__ASSEMBLER__) || defined(__LINKER__)
+# define   U(_x)	(_x)
+# define  UL(_x)	(_x)
+# define ULL(_x)	(_x)
+# define   L(_x)	(_x)
+# define  LL(_x)	(_x)
+#else
+# define  U(_x)	    (_x##U)
+# define  UL(_x)	(_x##UL)
+# define  ULL(_x)	(_x##ULL)
+# define  L(_x)	    (_x##L)
+# define  LL(_x)	(_x##LL)
+#endif
 
 
-# define  U_(_x)	(_x##U)
-# define   U(_x)	U_(_x)
-# define  UL_(_x)	(_x##UL)
-# define  UL(_x)	UL_(_x)
-# define  ULL_(_x)	(_x##ULL)
-# define  ULL(_x)	ULL_(_x)
-# define  L_(_x)	(_x##L)
-# define  L(_x)	L_(_x)
-# define  LL_(_x)	(_x##LL)
-# define  LL(_x)	LL_(_x)
-
+#if defined (__LINKER__)
+#define KiB     1K
+#define MiB     1M
+#define GiB     1024M
+#else
+#define KiB     ULL(1024)
+#define MiB     ULL(0x100000)
+#define GiB     ULL(0x40000000)
+#endif
 
 #ifndef ARRAY_SIZE
 /* Compute the number of elements in the given array */

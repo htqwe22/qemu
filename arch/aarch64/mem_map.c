@@ -211,7 +211,7 @@ void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
         set_page_table(el, va, pgd_table);
     }
     // get pud entry in pgd & init pgd pattern
-    for (; size >= M_(2); size -= M_(2)) {
+    for (; size >= 2*MiB; size -= 2*MiB) {
         table_4k_entry_t *pgd_pattern = &pgd_table->entries[(va >> 39) & 0x1ff];
         struct page_table_4k *next_table;
         if ((pgd_pattern->pgd.type & 1) == 0) {
@@ -238,8 +238,8 @@ void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
             pmd_pattern->value |= 1 << 16; // block (bit 16 block only)
         }
         pmd_pattern->b2m.pa_base = pa >> 21;
-        pa += M_(2);
-        va += M_(2);
+        pa += 2*MiB;
+        va += 2*MiB;
         pmd_pattern->value |= attrs;
         if (contiguous) {
             pmd_pattern->value |= (1ull << 52);
@@ -319,7 +319,7 @@ void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
     // asm volatile("dsb ish");
 }
 
-
+extern char ddr_data_start[];
 
 void mem_map_init(void)
 {
@@ -332,13 +332,15 @@ void mem_map_init(void)
     init_mmu_elx(cur_el);
     memset_64(tables, 0, sizeof(tables));
     memset_64(aloc_flag, 0, sizeof(aloc_flag));
- #if 1   
-    create_2m_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, M_(2), ATTR_MEM_RO_EXE);
+
+ #if 1
+    create_2m_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, 2*MiB, ATTR_MEM_RO_EXE);
     create_2m_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
-    create_2m_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
+ //   create_2m_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
+    create_2m_mapping(cur_el, (uint64_t)ddr_data_start, (uint64_t)ddr_data_start, 1*GiB, ATTR_MEM_NORMAL);
     create_2m_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);
 #else
-    create_4k_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, M_(2), ATTR_MEM_RO_EXE);
+    create_4k_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, 2*MiB, ATTR_MEM_RO_EXE);
     create_4k_mapping(cur_el, SEC_DRAM_BASE, SEC_DRAM_BASE, SEC_DRAM_SIZE, ATTR_MEM_NORMAL);
     create_4k_mapping(cur_el, PLAT_DDR_BASE, PLAT_DDR_BASE, PLAT_DDR_SIZE, ATTR_MEM_NORMAL);
     create_4k_mapping(cur_el, UART0_BASE, UART0_BASE, 0xa000000 - UART0_BASE, ATTR_DEV_NE);

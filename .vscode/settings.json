@@ -21,7 +21,8 @@
         "stack_frame.h": "c",
         "heap_4.h": "c",
         "plat_def.h": "c",
-        "heap.h": "c"
+        "heap.h": "c",
+        "plat_common.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

@@ -4,9 +4,9 @@ OUTPUT_FORMAT("elf64-littleaarch64", "elf64-littleaarch64", "elf64-littleaarch64
 OUTPUT_ARCH(aarch64)
 ENTRY (_start)
 MEMORY {
-    ROM(rx): ORIGIN = 0, LENGTH = 0x20000
-    SRAM (rw): ORIGIN = 0x0e000000, LENGTH = 1M
-    DDR (rwx): ORIGIN = MEMORY_USE_BADDR, LENGTH = MEMORY_USER_SIZE
+    ROM(rx): ORIGIN = SEC_ROM_BASE, LENGTH = SEC_ROM_SIZE
+    SRAM (rw): ORIGIN = SEC_SRAM_BASE, LENGTH = SEC_SRAM_SIZE
+    DDR (rwx): ORIGIN = NS_DRAM0_BASE, LENGTH = NS_DRAM0_SIZE
 } 
 SECTIONS
 {
@@ -56,6 +56,7 @@ SECTIONS
         . = ALIGN(4096);
         *(.page_data*)
         . = ALIGN(8);
+        ddr_data_start = .;
         *(.ddr_data*)
     } > DDR
 }

@@ -3,8 +3,7 @@ override CUR_MK_DIR := $(patsubst $(TOP_DIR)/%,%,$(dir $(lastword $(MAKEFILE_LIS
 override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := aarch64_misc.o aarch64_common.o mem_map.o aarch64_mmu.o \
-						stack_frame.o
+override LOCAL_OBJS :=  kvos.o
 
 
 

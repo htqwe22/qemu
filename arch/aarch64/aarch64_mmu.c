@@ -66,6 +66,8 @@ void init_mmu_elx(int n_el)
 		write_mair_el1(mair_value);
 		//TODO ...
 		write_tcr_el1(temp_value);
+		write_ttbr0_el1(0);
+		write_ttbr1_el1(0);
 	break;
 	break;
 	default :

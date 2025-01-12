@@ -38,11 +38,13 @@ int main(int argc, char **argv)
     
 
     LOG_WARN("kevin he, cur_el %d\n", get_current_el());
+    LOG_INFO("MIDR_EL1: %016lx\n", read_midr_el1());
     // LOG_INFO("RVBAR_EL1: %016lx\n", read_rvbar_el1());
     // LOG_INFO("RVBAR_EL2: %016lx\n", read_rvbar_el2());
     LOG_INFO("RVBAR_EL3: %016lx\n", read_rvbar_el3());
     LOG_INFO("id_aa64pfr0:%016x\n", read_id_aa64pfr0_el1());
     LOG_INFO("SCR_EL3: %016lx, daif %x\n", read_scr_el3(), read_daif());
+    LOG_INFO("MPIDR_EL1: %016lx\n", read_mpidr_el1());
     LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
 //    switch_to_el1(el1_entry, NULL);
     mem_map_init();

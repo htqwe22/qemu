@@ -24,9 +24,9 @@ SECTIONS
     } > ROM
     
     . = ALIGN(8);
-    __data_rw_start = .;
+    __data_lma_start = .; // or LOADADDR(.data)
     .data : {
-        _d_copy_start = .; /*or use LOADADDR(.data)*/
+        __data_link_start = .; /*or use LOADADDR(.data)*/
         *(.data)
         *(.data*)
     } > SRAM AT > ROM
@@ -34,7 +34,7 @@ SECTIONS
     . = ALIGN(8);
     .got :{
         *(.got*)
-        _d_copy_end = .;
+        __data_link_end = .;
     } > SRAM AT > ROM
 
     . = ALIGN(8);
@@ -43,9 +43,8 @@ SECTIONS
     *(.rela*)
     __rel_dyn_end = .;
     } > SRAM
-
+    image_end =  LOADADDR(.bss);
     . = ALIGN(8);
-    image_end = .;
     bss_begin = .;
     .bss (NOLOAD) : {
         *(.bss)

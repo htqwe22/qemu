@@ -62,6 +62,7 @@ include $(KV_LIBC_IDR)/firmware.mk
 include $(PLAT_DIR)/platform.mk
 include $(ARCH_DIR)/firmware.mk
 include $(TEST_DIR)/firmware.mk
+include os/firmware.mk
 
 S_OBJS := start.o 
 C_OBJS :=  main.o   

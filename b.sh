@@ -58,6 +58,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         debug)
         qemu-system-aarch64 ${BOARD_COMMON_FEATURE} -bios ./main.bin -semihosting-config enable=on,target=native -S -s
+        #qemu-system-aarch64 ${BOARD_COMMON_FEATURE} -monitor stdio -bios ./main.bin -semihosting-config enable=on,target=native -S -s
         shift
         ;;
         map)

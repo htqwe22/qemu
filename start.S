@@ -55,9 +55,9 @@ master:
     mov x29, xzr
 
     // copy data from LMA to VA
-    ldr x0, =_d_copy_start
-    ldr x1, = __data_rw_start
-    ldr x2, = _d_copy_end
+    ldr x0, = __data_link_start
+    ldr x1, = __data_lma_start
+    ldr x2, = __data_link_end
     sub x2, x2, x0
     bl memcpy_64
 

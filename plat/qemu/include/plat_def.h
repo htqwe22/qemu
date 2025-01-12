@@ -202,9 +202,9 @@ extern "C" {
  * GIC related constants
  */
 
-#define GICD_BASE			0x8000000
-#define GICC_BASE			0x8010000
-#define GICR_BASE			0x80A0000
+#define GICD_BASE			0x8000000  	//distributor
+#define GICC_BASE			0x8010000	//cpu interface
+#define GICR_BASE			0x80A0000	//redistributor
 
 
 #define QEMU_IRQ_SEC_SGI_0		8

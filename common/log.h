@@ -59,15 +59,28 @@ void kv_debug_str(const char *name, const char *str, int len);
 
 extern int kv_printf(const char *format, ...);
 
-#define kv_debug(lvl, fmt, ...) 	if ((lvl) <= g_log_level) kv_printf("[%s:%d][%s]"fmt,  _basename(__FILE__), __LINE__, log_lv[lvl],##__VA_ARGS__)
+#define kv_debug(lvl, fmt, ...) 	do{ if ((lvl) <= g_log_level) \
+    kv_printf("[%s:%d][%s]"fmt,  _basename(__FILE__), __LINE__, log_lv[lvl],##__VA_ARGS__);\
+    }while(0)
 
-#define kv_debug_raw(lvl, fmt, ...) if ((lvl) <= g_log_level) kv_printf(fmt, ##__VA_ARGS__) 
+#define kv_debug_raw(lvl, fmt, ...) do{ if ((lvl) <= g_log_level) \
+    kv_printf(fmt, ##__VA_ARGS__); \
+    }while(0)
 
+#define LOG_DEBUG(fmt, ...) do{ if ((LOG_LVL_DEBUG) <= g_log_level) \
+    kv_printf("[%s:%d][%s]" fmt,  _basename(__FILE__), __LINE__, "D", ##__VA_ARGS__);\
+    }while(0)
 
-#define LOG_DEBUG(fmt, ...) 	if ((LOG_LVL_DEBUG) <= g_log_level) kv_printf("[%s:%d][%s]" fmt,  _basename(__FILE__), __LINE__, "D", ##__VA_ARGS__);
-#define LOG_INFO(fmt, ...) 		if ((LOG_LVL_INFO) <= g_log_level) kv_printf(COLOR_CYAN "[%s:%d][%s]" fmt COLOR_NONE,  _basename(__FILE__), __LINE__, "I", ##__VA_ARGS__);
-#define LOG_WARN(fmt, ...) 		if ((LOG_LVL_WARN) <= g_log_level) kv_printf(COLOR_BROWN "[%s:%d][%s]" fmt COLOR_NONE,  _basename(__FILE__), __LINE__, "WARN", ##__VA_ARGS__);
-#define LOG_ERROR(fmt, ...) 	if ((LOG_LVL_ERR) <= g_log_level) kv_printf(COLOR_RED"[%s:%d][%s]" fmt COLOR_NONE ,  _basename(__FILE__), __LINE__, "ERR", ##__VA_ARGS__);
+#define LOG_INFO(fmt, ...)  do{ if ((LOG_LVL_INFO) <= g_log_level) \
+    kv_printf(COLOR_CYAN "[%s:%d][%s]" fmt COLOR_NONE,  _basename(__FILE__), __LINE__, "I", ##__VA_ARGS__);\
+    }while(0)
+
+#define LOG_WARN(fmt, ...)  do{ if ((LOG_LVL_WARN) <= g_log_level) \
+    kv_printf(COLOR_BROWN "[%s:%d][%s]" fmt COLOR_NONE,  _basename(__FILE__), __LINE__, "WARN", ##__VA_ARGS__);\
+    }while(0)
+#define LOG_ERROR(fmt, ...) do{ if ((LOG_LVL_ERR) <= g_log_level) \
+    kv_printf(COLOR_RED"[%s:%d][%s]" fmt COLOR_NONE ,  _basename(__FILE__), __LINE__, "ERR", ##__VA_ARGS__);\
+    }while(0)
 
 //#define debug_str(lvl, n, str) 	if ((lvl) <= g_log_level) kv_printf("[%s][%s:%d]%.*s\n",log_lv[lvl], _basename(__FILE__), __LINE__, n + 1, str)
 

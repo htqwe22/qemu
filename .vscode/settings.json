@@ -24,7 +24,8 @@
         "heap.h": "c",
         "plat_common.h": "c",
         "simple_vsprintf.h": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "gicv3_basic.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

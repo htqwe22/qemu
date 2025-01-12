@@ -62,6 +62,7 @@ include $(KV_LIBC_IDR)/firmware.mk
 include $(PLAT_DIR)/platform.mk
 include $(ARCH_DIR)/firmware.mk
 include $(TEST_DIR)/firmware.mk
+include driver/firmware.mk
 include os/firmware.mk
 
 S_OBJS := start.o 
@@ -70,10 +71,7 @@ CXX_OBJS :=
 
 
 OBJ_COMMON :=  common/log.o common/shell.o
-OBJ_DRV += driver/drv_pl011.o
-
 C_OBJS += $(OBJ_COMMON)
-C_OBJS += $(OBJ_DRV)
 
 
 BIN_NAME := main.bin

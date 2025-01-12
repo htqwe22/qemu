@@ -69,26 +69,24 @@ endfunc
  * 9. CPTR寄存器
  * 10. 注意barrier的设置
 */
+
+// void switch_to_el1(void *enter_point, bool ns);
 func switch_to_el1 // el2 not supported, use el1
 	msr daifset, #15 // diable exceptions
 	msr elr_el3, x0  // pc
-	msr vbar_el1, x1 // vector table
 
 	mrs x4, scr_el3
 	// security setting ...
-	// set {NSE, NS} = 01 NS ...
+	// set {NSE, NS} = 00 S ...
 	ldr x5, =(SCR_NSE_BIT | SCR_NS_BIT)
-	bic x4, x4, x5 
-	//orr x4, x4, SCR_NS_BIT
-
+	bic x4, x4, x5 //default Secure.
+	cmp x1, #0
+	b.eq NS_SET_DONE
+	orr x4, x4, SCR_NS_BIT //set as no secure
+NS_SET_DONE:
 	// set aarch64 in EL1
 	orr x4, x4, SCR_RW_BIT
-	
-//	mov x4, #0x630
 	msr scr_el3, x4 //scr_el3 ...
-
-//	mrs x4, hcr_el2
-//	msr hcr_el2, xzr
 
 	// configure sctlr_el1
 	//ldr x4, =(SCTLR_EL1_RES1) 

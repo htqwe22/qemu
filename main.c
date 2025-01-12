@@ -15,6 +15,7 @@
 #include <aarch64_mmu.h>
 #include <el_switch_test.h>
 #include <exception_common.h>
+#include <asm_func.h>
 #include <app_int.h>
 
 
@@ -47,9 +48,10 @@ int main(int argc, char **argv)
     LOG_INFO("SCR_EL3: %016lx, daif %x\n", read_scr_el3(), read_daif());
     LOG_INFO("MPIDR_EL1: %016lx\n", read_mpidr_el1());
     LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
-//    switch_to_el1(el1_entry, NULL);
+//    switch_to_el1(el1_entry, 0);
 //    mem_map_init();
     app_interrupt_init();
     do_shell_loop();
+    
     return 0;
 }

@@ -31,7 +31,7 @@ extern void *memset_64(void *s, uint64_t c, size_t n);
 
 extern void *memcpy_64(void *dest, const void *src, size_t n);
 
-extern void switch_to_el1(void *enter_point, void *vector_table);
+extern void switch_to_el1(void *enter_point, int ns);
 
 extern uint32_t getAffinity(void);
 

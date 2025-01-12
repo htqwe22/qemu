@@ -346,6 +346,12 @@ uint64_t getGICRTyper(void);
 extern struct GICv3_dist_if*       gic_dist;
 extern struct GICv3_rdist_if*      gic_rdist;
 
+extern unsigned int getICC_CTLR_EL3(void);
+extern void setICC_CTLR_EL3(unsigned int);
+
+unsigned int getICC_SRE_EL3(void);
+unsigned int getICC_SRE_EL2(void);
+unsigned int getICC_SRE_EL1(void);
 #endif
 
 // ----------------------------------------------------------

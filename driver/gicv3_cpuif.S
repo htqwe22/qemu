@@ -112,7 +112,7 @@ disableGroup0Ints:
    
 
 // ------------------------------------------------------------
-
+// this is a banked REG for current state ...
   .global enableGroup1Ints
   // void enableGroup1Ints((void)//
   .type enableGroup1Ints, @function

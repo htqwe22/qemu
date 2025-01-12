@@ -10,15 +10,19 @@
 
 #ifndef KV_APP_INT_H
 #define KV_APP_INT_H
-
+#include <stdint.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+// this is the very first interrupt initial handler
+// make sure invoke it first before any other interrupt init
+// Note: call only once ...
+void gic_global_init(void);
 
-void app_interrupt_init(void);
+void gic_current_pe_init(void);
 
-
+int gic_configure_spi(int INTID, int priority, int target_cpu, int enable);
 
 
 

@@ -7,8 +7,6 @@
  * Version : 0.0.1
  * Information :
  **********************************************************************************/
-
-#include "exception_el1_s.h"
 #include <exception_common.h>
 
 

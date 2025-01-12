@@ -7,8 +7,6 @@
  * Version : 0.0.1
  * Information :
  **********************************************************************************/
-
-#include "exception_el3.h"
 #include <exception_common.h>
 
 void el3_sync_handler(uint64_t offset)

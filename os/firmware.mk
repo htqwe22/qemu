@@ -3,7 +3,7 @@ override CUR_MK_DIR := $(patsubst $(TOP_DIR)/%,%,$(dir $(lastword $(MAKEFILE_LIS
 override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS :=  exception_common.o 	exception_el3.o exception_el1_s.o exception_el1_ns.o \
+override LOCAL_OBJS :=  exception_common.o 	exception_handler_el3.o exception_handler_el1_s.o exception_handler_el1_ns.o \
 					kvos.o
 
 

@@ -204,7 +204,7 @@ extern "C" {
 
 #define GICD_BASE			0x8000000  	//distributor
 #define GICC_BASE			0x8010000	//cpu interface
-#define GICI_BASE			0x8080000	//cpu interface	
+#define GICI_BASE			0x8080000	//its interface	
 #define GICR_BASE			0x80A0000	//redistributor
 
 

@@ -19,6 +19,7 @@
 #define DEBUG_GIC       1
 
 #include <log.h>
+#include <gicv3_registers.h>
 #include <stdint.h>
 
 /* GICD_TYPER field descriptions */
@@ -271,6 +272,8 @@ void setBPR1(uint32_t priority);
 // Returns the priority of the current active interrupt
 uint32_t getRunningPriority(void);
 
+uint32_t get_fixed_Priority_bits(void);
+
 // ------------------------------------------------------------
 // SGIs
 // ------------------------------------------------------------
@@ -338,6 +341,10 @@ void configNSAccessSGI(uint32_t INTID, unsigned access);
 
 uint32_t getGICDTyper(void);
 uint64_t getGICRTyper(void);
+
+
+extern struct GICv3_dist_if*       gic_dist;
+extern struct GICv3_rdist_if*      gic_rdist;
 
 #endif
 

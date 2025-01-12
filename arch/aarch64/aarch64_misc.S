@@ -17,6 +17,8 @@ func getAffinity
   RET
 endfunc
 
+
+
 func disable_mmu_el1
 	mov	x1, #1      // #5 C & M
 

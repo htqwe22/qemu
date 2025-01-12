@@ -13,14 +13,15 @@
 #include <drv_pl011.h>
 #include <aarch64_common.h>
 #include <aarch64_mmu.h>
-#include <test_exception.h>
 #include <el_switch_test.h>
+#include <exception_common.h>
+#include <app_int.h>
 
 
 extern void asm_test(uint64_t arr[]);
 extern void mem_map_init(void);
 extern int do_shell_loop(void);
-extern struct exception_entry el3_exceptions[4];
+
 extern int image_end;
 extern int bss_begin;
 
@@ -47,8 +48,8 @@ int main(int argc, char **argv)
     LOG_INFO("MPIDR_EL1: %016lx\n", read_mpidr_el1());
     LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
 //    switch_to_el1(el1_entry, NULL);
-    mem_map_init();
-
+//    mem_map_init();
+    app_interrupt_init();
     do_shell_loop();
     return 0;
 }

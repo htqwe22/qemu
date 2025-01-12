@@ -14,16 +14,19 @@ SECTIONS
     image_start = .;
     .text : {
         *start.o(.text.asm*)
-        *(.text.boot)       /*for golobal section setting*/
+        *(.text.asm*)
+        . = ALIGN(2K);
+        *(.vectors)
+        /* *(.text.boot)       for golobal section setting*/
         *(.text)
         *(.text*)
-        . = ALIGN(4K);
-        *(.vectors)
+
     } > ROM
+
     .rodata : { 
         *(.rodata)
     } > ROM
-    
+
     . = ALIGN(8);
     __data_lma_start = .; // or LOADADDR(.data)
     .data : {

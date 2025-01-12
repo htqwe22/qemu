@@ -1,5 +1,5 @@
 /**********************************************************************************
- * FILE : test_exception.h
+ * FILE : exception_common.h
  * Description:
  * Author: Kevin He
  * Created On: 2025-01-02 , At 21:39:52
@@ -8,9 +8,10 @@
  * Information :
  **********************************************************************************/
 
-#ifndef KV_TEST_EXCEPTION_H
-#define KV_TEST_EXCEPTION_H
+#ifndef KV_EXCEPTION_COMMON_H
+#define KV_EXCEPTION_COMMON_H
 #include <stdint.h>
+#include <arch_helpers.h>
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -24,6 +25,7 @@ struct exception_entry
     uint32_t fiq_inst[32]; 
     uint32_t serr_inst[32]; 
 };
+
 
 /*
  * M[3:0] 中 M[3:2] 返回的异常等级
@@ -64,9 +66,18 @@ union reg_esr
 };
 
 
-void test_exception(void);
+
+extern void excep_info(uint64_t offset, int el);
+extern void debug_callstack(void *fp);
 
 void set_exception_table_el3(void);
+
+void set_exception_table_el1_s(void);
+
+void set_exception_table_el1_ns(void);
+
+void test_exception(void);
+
 
 
 
@@ -78,4 +89,4 @@ void set_exception_table_el3(void);
 }
 #endif
 
-#endif //test_exception.h
+#endif //exception_common.h

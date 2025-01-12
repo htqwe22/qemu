@@ -1,8 +1,8 @@
 override CUR_MK_DIR := $(patsubst $(TOP_DIR)/%,%,$(dir $(lastword $(MAKEFILE_LIST))))
-override LOCAL_INCLUDES := include
+override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := exceptions_el3.o
+override LOCAL_OBJS := 
 
 
 

@@ -145,14 +145,15 @@ static uint32_t isValidExtSPI(uint32_t ID)
 // ------------------------------------------------------------
 // Distributor Functions
 // ------------------------------------------------------------
-
+// 根据手册说明，在写AER位时,GROUP的配置要求是全0，否则结果是不可知的
+// 所以第一次写的时候要设置group的值为0，下次再写group的信息，同时也要带上AER位
 // Enables and configures of the Distributor Interface
 uint32_t enableGIC(void)
 {
   // Check that GIC pointers are valid
   if (gic_addr_valid==0)
     return 1;
-
+  
   // First set the ARE bits
   gic_dist->GICD_CTLR = (1 << 5) | (1 << 4);
 

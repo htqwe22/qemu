@@ -109,6 +109,12 @@
 #define ICC_EOIR0_EL1		S3_0_c12_c8_1
 #define ICC_EOIR1_EL1		S3_0_c12_c12_1
 #define ICC_SGI0R_EL1		S3_0_c12_c11_7
+#define ICC_DIR_EL1			S3_0_c12_c11_1
+#define ICC_BPR0_EL1		S3_0_c12_c8_3
+#define ICC_BPR1_EL1		S3_0_c12_c12_3
+#define ICC_SGI1R_EL1		S3_0_c12_c11_5
+#define ICC_ASGI1R_EL1		S3_0_c12_c11_6
+
 
 /*******************************************************************************
  * Definitions for EL2 system registers for save/restore routine

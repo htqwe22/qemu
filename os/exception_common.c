@@ -1,5 +1,5 @@
 /**********************************************************************************
- * FILE : test_exception.c
+ * FILE : exception_common.c
  * Description:
  * Author: Kevin He
  * Created On: 2025-01-02 , At 21:39:52
@@ -8,13 +8,16 @@
  * Information :
  **********************************************************************************/
 
-#include "test_exception.h"
+#include "exception_common.h"
 #include <arch_helpers.h>
 #include "log.h"
-extern void debug_callstack(void *fp);
-uint8_t fix_3 = 1;
+
+
+extern const struct exception_entry el3_exception_table[4];
+extern const struct exception_entry el1_s_exception_table[4];
+extern const struct exception_entry el1_ns_exception_table[4];
+
 //extern uint64_t el3_exceptions[];
-extern const struct exception_entry el3_exceptions[4];
 static const char *exception_type[] = {
     "Sync",
     "IRQ",
@@ -67,14 +70,41 @@ static const char *esr_name[0x40] = {
         kv_debug_raw(LOG_LVL_INFO, #Xn ": 0x%lx\n", reg); \
     } while (0)
 
-static inline void excep_info(uint64_t offset)
+void excep_info(uint64_t offset, int el)
 {
-    // (void)exception_desc;
-    // (void)exception_type;
-    uint64_t elr = read_elr_el3();
-    uint64_t spsr = read_spsr_el3();
-    uint64_t esr = read_esr_el3();
-    uint64_t far = read_far_el3(); 
+    uint64_t elr ; 
+    uint64_t spsr; 
+    uint64_t esr ; 
+    uint64_t far ; 
+    switch(el) {
+    case 3:
+        elr = read_elr_el3();
+        spsr = read_spsr_el3();
+        esr = read_esr_el3();
+        far = read_far_el3(); 
+    break;
+
+    case 2:
+        elr = read_elr_el2();
+        spsr = read_spsr_el2();
+        esr = read_esr_el2();
+        far = read_far_el2(); 
+    break;
+
+    case 1:
+        elr = read_elr_el1();
+        spsr = read_spsr_el1();
+        esr = read_esr_el1();
+        far = read_far_el1(); 
+    break;
+    default :
+        return;
+        kv_debug_raw(LOG_LVL_INFO, COLOR_RED);
+
+
+    }
+
+
     union reg_spsr *spsr_info = (union reg_spsr *)&spsr;
     union reg_esr *esr_info = (union reg_esr *)&esr;
 
@@ -145,38 +175,23 @@ static inline void excep_info(uint64_t offset)
     kv_debug_raw(LOG_LVL_INFO, COLOR_NONE);
 }
 
-void exception_sync_handler(uint64_t offset)
-{
-    uint64_t FP;
-    asm volatile ("mov %0, fp\n" : "=r" (FP));
-    excep_info(offset);
-    debug_callstack((void *)FP);
-    write_elr_el3(read_elr_el3() + 4);
-//    asm volatile ("b .");
-}
-
-void exception_irq_fiq_handler(uint64_t offset)
-{
-    uint64_t FP;
-    asm volatile ("mov %0, fp\n" : "=r" (FP));
-    excep_info(offset);
-    debug_callstack((void *)FP);
-    excep_info(offset);
-}
-
-void exception_serror_handler(uint64_t offset)
-{
-    uint64_t FP;
-    asm volatile ("mov %0, fp\n" : "=r" (FP));
-    excep_info(offset);
-    debug_callstack((void *)FP);
-    excep_info(offset);
-}
 
 
 void set_exception_table_el3(void)
 {
-    write_vbar_el3((u_register_t)el3_exceptions);
+    write_vbar_el3((u_register_t)el3_exception_table);
+    write_daifclr(0xf); 
+}
+
+void set_exception_table_el1_s(void)
+{
+    write_vbar_el3((u_register_t)el1_s_exception_table);
+    write_daifclr(0xf); 
+}
+
+void set_exception_table_el1_ns(void)
+{
+    write_vbar_el3((u_register_t)set_exception_table_el1_ns);
     write_daifclr(0xf); 
 }
 
@@ -193,7 +208,7 @@ void test1(void)
 
 void test_exception(void)
 {  
-    LOG_DEBUG("EL3 exception table at %p, size of table %lu\n", el3_exceptions, sizeof(el3_exceptions)); 
+    LOG_DEBUG("EL3 exception table at %p, size of table %lu\n", el3_exception_table, sizeof(el3_exception_table)); 
     uint8_t data[12] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
     set_exception_table_el3();
     uint64_t *ptr = (uint64_t *)(data + 2);

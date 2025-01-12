@@ -10,6 +10,7 @@
 
 #include "stack_frame.h"
 #include <stdint.h>
+#include <arch_helpers.h>
 #include <log.h>
 
 const struct stack_frame *get_prev_frame(const struct stack_frame *fp)
@@ -28,6 +29,7 @@ void debug_callstack(void *fp)
     } while (frame->fp != (void *)0);
     kv_debug_raw(LOG_LVL_INFO, "fp: %p\n", frame->fp);
     kv_debug_raw(LOG_LVL_INFO, "call from: %#lx\n", (uint64_t)frame->lr -4);
+    for (;;) wfi();
 }
 
 

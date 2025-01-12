@@ -25,7 +25,9 @@
         "plat_common.h": "c",
         "simple_vsprintf.h": "c",
         "typeinfo": "c",
-        "gicv3_basic.h": "c"
+        "gicv3_basic.h": "c",
+        "asm_func.h": "c",
+        "exception_common.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

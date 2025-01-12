@@ -45,7 +45,8 @@
 	.size \_name, . - \_name
 	.endm
 	 */
-	.macro endfunc _name=0
+	 
+	.macro endfunc _name
 	.cfi_endproc
 	.endm
 	

@@ -14,7 +14,7 @@
 #include <aarch64_mmu.h>
 #include <stdint.h>
 #include <heap.h>
-#include <kv_string.h>
+#include <asm_func.h>
 #include "log.h"
 #include "stack_frame.h"
 

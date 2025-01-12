@@ -1,6 +1,6 @@
 #include <arch.h>
-
-.section ".text"
+#include <asm_macros.S>
+// .section ".text"
 
 .globl	disable_mmu_el1
 .globl	disable_mmu_el2
@@ -8,7 +8,16 @@
 .global switch_to_el1
 .global test_print
 
-disable_mmu_el1:
+
+  .global getAffinity
+func getAffinity
+  MRS      x0, MPIDR_EL1
+  UBFX     x1, x0, #32, #8      // rd, rn, #p, #n ==> x1 = x0[39:31]
+  BFI      w0, w1, #24, #8      // rd, rn, #p, #n ==> w0[31:24] = w1[7:0]
+  RET
+endfunc
+
+func disable_mmu_el1
 	mov	x1, #1      // #5 C & M
 
 	mrs	x0, sctlr_el1
@@ -17,11 +26,11 @@ disable_mmu_el1:
 	isb	/* ensure MMU is off */
 	dsb	sy
 	ret
+endfunc
 
 
 
-
-disable_mmu_el2:
+func disable_mmu_el2
 	mov	x1, #1      // #5 C & M
 
 	mrs	x0, sctlr_el2
@@ -30,11 +39,11 @@ disable_mmu_el2:
 	isb	/* ensure MMU is off */
 	dsb	sy
 	ret
+endfunc
 
 
 
-
-disable_mmu_el3:
+func disable_mmu_el3
 	mov	x1, #1      // #5 C & M
 
 	mrs	x0, sctlr_el1
@@ -43,6 +52,7 @@ disable_mmu_el3:
 	isb	/* ensure MMU is off */
 	dsb	sy
 	ret
+endfunc
 
 /* 可以参考ATF中 bl1_prepare_next_image的实现
  * ELt等级的切换需要注意以下几点：
@@ -57,7 +67,7 @@ disable_mmu_el3:
  * 9. CPTR寄存器
  * 10. 注意barrier的设置
 */
-switch_to_el1: // el2 not supported, use el1
+func switch_to_el1 // el2 not supported, use el1
 	msr daifset, #15 // diable exceptions
 	msr elr_el3, x0  // pc
 	msr vbar_el1, x1 // vector table
@@ -94,3 +104,4 @@ switch_to_el1: // el2 not supported, use el1
 	eret
 	dsb	sy
 	isb
+endfunc

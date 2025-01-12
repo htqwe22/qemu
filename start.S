@@ -1,25 +1,29 @@
 
 #include <arch.h>
 #include <plat_def.h>
-.section ".text.boot"
-
+#include <asm_macros.S>
+// .section ".text.boot"
+/*
+ * 使用 cfi_startproc 可以为汇编增加调试信息
+ */
 .global _start
 .global memset_64
 .global memcpy_64
 .global asm_test
 .global proc_hang
 
-_start:
+func _start
     mrs x0, mpidr_el1
     and x0, x0, #0xFF
     cbz x0, master
-
+endfunc _start
        
-proc_hang:
+func proc_hang
     wfe
     b proc_hang
+endfunc proc_hang
 
-master:
+func master
     msr	daifset, #15 // D,A,I,F all disabled. 可以接受立即数操作
     bl init_sctlr_el3
     
@@ -64,6 +68,7 @@ master:
     bl main
     b proc_hang
     ret
+endfunc master
 
 /*
     EE = 0; 在EL3的显式数据访问，以及EL3翻译机制中第一阶段的翻译表遍历是小端序
@@ -75,15 +80,16 @@ master:
     DSSBS = 0; 在进入EL3时会设置PSTATE.SSBS = DSSBS（这里是0）。设置为零以在进入EL3异常时禁用推测性存储绕过安全行为
 */
 
-init_sctlr_el3:
+func init_sctlr_el3
     ldr x0, =(SCTLR_RESET_VAL & ~(SCTLR_EE_BIT | SCTLR_WXN_BIT \
         | SCTLR_SA_BIT | SCTLR_A_BIT | SCTLR_DSSBS_BIT))
     orr x0, x0,  #SCTLR_I_BIT // 使能指令cache. orr可以接受立即数操作
     msr sctlr_el3, x0
     isb
     ret
+endfunc init_sctlr_el3
 
-memset_64:
+func memset_64
     mov x3, x0
     cmp x2, 0
     b.eq    2f
@@ -94,8 +100,9 @@ memset_64:
 2:
     mov x0, x3
     ret
+endfunc memset_64
 
-memcpy_64:    
+func memcpy_64  
     mov x3, x0 //backup as return value
     cmp x2, 0 // length
     b.eq    2f
@@ -107,10 +114,12 @@ memcpy_64:
 2:
     mov x0, x3
     ret
+endfunc memcpy_64
 
 
-asm_test :
+func asm_test
     ldp x1, x2, [x0, #0x10]!
 
     ret
+endfunc asm_test
 

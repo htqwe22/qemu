@@ -13,7 +13,8 @@ SECTIONS
     . = ORIGIN(ROM); /* for virt board */
     image_start = .;
     .text : {
-        *(.text.boot)
+        *start.o(.text.asm*)
+        *(.text.boot)       /*for golobal section setting*/
         *(.text)
         *(.text*)
         . = ALIGN(4K);

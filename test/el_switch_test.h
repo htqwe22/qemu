@@ -17,7 +17,7 @@ extern "C" {
 
 void el1_entry(void);
 
-void switch_to_el1(void *enter_point, void *vector_table);
+
 
 
 

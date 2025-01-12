@@ -26,7 +26,7 @@ void init_scr_el3(void)
 
 bool is_current_mmu_enable(void)
 {
-    disable_mmu_el1();
+//    disable_mmu_el1();
     __asm__ volatile ("mov x28, #7\n");	
     u_register_t sctlr;
     int el = get_current_el();

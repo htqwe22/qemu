@@ -41,6 +41,8 @@ static void do_mem_show(int argc, char * const argv[]);
 static void do_go(int argc, char * const argv[]);
 static void do_reboot(int argc, char * const argv[]);
 static void do_read_el(int argc, char * const argv[]);
+static void get_system_counter(int argc, char *const argv[]);
+
 
 cmd_list_t cmdlist_arr[] = 
 {
@@ -51,6 +53,7 @@ cmd_list_t cmdlist_arr[] =
 	{"read_el", do_read_el},
 	{"go", do_go},
 	{"reboot", do_reboot},
+	{"time", get_system_counter},
 };
 
 
@@ -178,6 +181,11 @@ static void do_read_el(int argc, char * const argv[])
 {
 	uint64_t el = get_current_el();
 	console_printf("current EL:%d\n", el);
+}
+
+static void get_system_counter(int argc, char *const argv[])
+{
+	console_printf("[T]:%#lx\n", read_cntpct_el0());
 }
 
 

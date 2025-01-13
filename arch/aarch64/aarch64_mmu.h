@@ -110,7 +110,7 @@ struct page_table_4k{
 #define ATTR_MEM_RO_EXE (ATTR_COMMON | ATTR_AP_RONLY | ATTR_MAIR(MAIR_MEM_NORMAL_IDX))
 #define ATTR_MEM_RO     (ATTR_COMMON | ATTR_AP_RONLY | ATTR_PXN | ATTR_XN | ATTR_MAIR(MAIR_MEM_NORMAL_IDX))
 
-
+#define ATTR_SET_NS(attr)   ((attr) | ATTR_NS)
 
 
 void init_mmu_elx(int n_el);

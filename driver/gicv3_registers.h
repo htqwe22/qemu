@@ -25,7 +25,7 @@ struct GICv3_dist_if
   const volatile uint32_t GICD_TYPER;             // +0x0004 - RO - Interrupt Controller Type Register
   const volatile uint32_t GICD_IIDR;              // +0x0008 - RO - Distributor Implementer Identification Register
 
-  const volatile uint32_t padding0;               // +0x000C - RESERVED
+  const volatile uint32_t GICD_TYPER2;            // +0x000C - RESERVED
 
         volatile uint32_t GICD_STATUSR;           // +0x0010 - RW - Status register
 

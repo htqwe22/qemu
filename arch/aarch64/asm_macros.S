@@ -98,3 +98,42 @@
 	.macro no_ret _func:req, skip_nop=0
 	bl	\_func
 	.endm
+
+
+
+	
+#define SCRATCH_REG_SIZE #(22 * 8)
+// save takes 13 instruction
+	.macro save_caller_regs el_n
+	sub	sp, sp, SCRATCH_REG_SIZE
+	stp	x0, x1, [sp]
+	stp	x2, x3, [sp, #0x10]
+	stp	x4, x5, [sp, #0x20]
+	stp	x6, x7, [sp, #0x30]
+	stp	x8, x9, [sp, #0x40]
+	stp	x10, x11, [sp, #0x50]
+	stp	x12, x13, [sp, #0x60]
+	stp	x14, x15, [sp, #0x70]
+	stp	x16, x17, [sp, #0x80]
+	stp	x18, x30, [sp, #0x90]
+	mrs x30, elr_\el_n
+	stp x29, x30, [sp, #0xa0] // x30 is elr
+	.endm
+
+	.macro restore_caller_regs el_n
+	
+	ldp	x0, x1, [sp]
+	ldp	x2, x3, [sp, #0x10]
+	ldp	x4, x5, [sp, #0x20]
+	ldp	x6, x7, [sp, #0x30]
+	ldp	x8, x9, [sp, #0x40]
+	ldp	x10, x11, [sp, #0x50]
+	ldp	x12, x13, [sp, #0x60]
+	ldp	x14, x15, [sp, #0x70]
+	ldp	x16, x17, [sp, #0x80]
+	ldp	x29, x30, [sp, #0xa0] // x30 is elr
+	msr elr_\el_n, x30		  // restore elr	
+	ldp	x18, x30, [sp, #0x90] // is real x30
+	add	sp, sp, SCRATCH_REG_SIZE
+	.endm
+

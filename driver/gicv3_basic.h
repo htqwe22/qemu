@@ -177,8 +177,9 @@ uint32_t setIntType(uint32_t INTID, uint32_t rd, uint32_t conf);
 // rd    = Redistributor number (ignored if INTID is a SPI)
 // group = Security/group setting
 #define GICV3_GROUP0                     (0)
-#define GICV3_GROUP1_SECURE              (1)
-#define GICV3_GROUP1_NON_SECURE          (2)
+#define GICV3_GROUP1_NON_SECURE          (1)
+#define GICV3_GROUP1_SECURE              (2)
+
 
 uint32_t setIntGroup(uint32_t INTID, uint32_t rd, uint32_t group);
 
@@ -348,6 +349,7 @@ extern struct GICv3_rdist_if*      gic_rdist;
 
 extern unsigned int getICC_CTLR_EL3(void);
 extern void setICC_CTLR_EL3(unsigned int);
+extern void setICC_CTLR_EL1(unsigned int value);
 
 unsigned int getICC_SRE_EL3(void);
 unsigned int getICC_SRE_EL2(void);

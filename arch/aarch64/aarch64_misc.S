@@ -81,9 +81,9 @@ func switch_to_el1 // el2 not supported, use el1
 	ldr x5, =(SCR_NSE_BIT | SCR_NS_BIT)
 	bic x4, x4, x5 //default Secure.
 	cmp x1, #0
-	b.eq NS_SET_DONE
+	b.eq 1f
 	orr x4, x4, SCR_NS_BIT //set as no secure
-NS_SET_DONE:
+1:
 	// set aarch64 in EL1
 	orr x4, x4, SCR_RW_BIT
 	msr scr_el3, x4 //scr_el3 ...
@@ -101,6 +101,20 @@ NS_SET_DONE:
 	ldr x4, =(3 << 20)
 	msr cpacr_el1, x4 // FP/SIMD registers
 
+	eret
+	dsb	sy
+	isb
+endfunc
+
+
+// void switch_to_el0(void *enter_point); invoked from el1
+func switch_to_el0
+	msr daifset, #15 // diable exceptions
+	msr elr_el1, x0  // pc
+
+	// configure spsr_el1
+	// M[4:0] = 0, DAIF = 0, el0t mode
+	msr spsr_el1, xzr
 	eret
 	dsb	sy
 	isb

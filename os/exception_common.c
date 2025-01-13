@@ -185,15 +185,15 @@ void set_exception_table_el3(void)
 
 void set_exception_table_el1_s(void)
 {
-    write_vbar_el3((u_register_t)el1_s_exception_table);
+    write_vbar_el1((u_register_t)el1_s_exception_table);
     write_daifclr(0xf); 
 }
 
-void set_exception_table_el1_ns(void)
-{
-    write_vbar_el3((u_register_t)set_exception_table_el1_ns);
-    write_daifclr(0xf); 
-}
+// void set_exception_table_el1_ns(void)
+// {
+//     write_vbar_el1((u_register_t)set_exception_table_el1_ns);
+//     write_daifclr(0xf); 
+// }
 
 void test1(void)
 {

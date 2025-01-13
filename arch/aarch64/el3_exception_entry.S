@@ -19,32 +19,34 @@ vector_base el3_exception_table
 	 * -----------------------------------------------------
 	 */
 vector_entry SynchronousExceptionSP0
-	stp x0, x1, [sp, #-16]!
+	save_caller_regs el3
 	mov	x0, #0
-	mov x1, sp
 	bl	el3_sync_handler
-	ldp x0, x1, [sp], #16
+	restore_caller_regs el3
 	eret
 end_vector_entry SynchronousExceptionSP0
 
 vector_entry IrqSP0
+	save_caller_regs el3
 	mov	x0, #0x80
-	mov x1, sp
 	bl	el3_irq_handler
+	restore_caller_regs el3
     eret
 end_vector_entry IrqSP0
 
 vector_entry FiqSP0
+	save_caller_regs el3
 	mov	x0, #0x100
-	mov x1, sp
 	bl	el3_fiq_handler
+	restore_caller_regs el3
     eret
 end_vector_entry FiqSP0
 
 vector_entry SErrorSP0
+	save_caller_regs el3
 	mov	x0, #0x180
-	mov x1, sp
 	bl	el3_serror_handler
+	restore_caller_regs el3
     eret
 end_vector_entry SErrorSP0
 
@@ -53,28 +55,34 @@ end_vector_entry SErrorSP0
 	 * -----------------------------------------------------
 	 */
 vector_entry SynchronousExceptionSPx
+	save_caller_regs el3
 	mov	x0, #0x200
-	mov x1, sp
 	bl	el3_sync_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry SynchronousExceptionSPx
 
 vector_entry IrqSPx
+	save_caller_regs el3
 	mov	x0, #0x280
-	mov x1, sp
 	bl	el3_irq_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry IrqSPx
 
 vector_entry FiqSPx
+	save_caller_regs el3
 	mov	x0, #0x300
 	bl	el3_fiq_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry FiqSPx
 
 vector_entry SErrorSPx
+	save_caller_regs el3
 	mov	x0, #0x380
 	bl	el3_serror_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry SErrorSPx
 
@@ -83,26 +91,34 @@ end_vector_entry SErrorSPx
 	 * -----------------------------------------------------
 	 */
 vector_entry SynchronousExceptionA64
+	save_caller_regs el3
 	mov	x0, #0x400
 	bl	el3_sync_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry SynchronousExceptionA64
 
 vector_entry IrqA64
+	save_caller_regs el3
 	mov	x0, #0x480
 	bl	el3_irq_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry IrqA64
 
 vector_entry FiqA64
+	save_caller_regs el3
 	mov	x0, #0x500
 	bl	el3_fiq_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry FiqA64
 
 vector_entry SErrorA64
+	save_caller_regs el3
 	mov	x0, #0x580
 	bl	el3_serror_handler
+	restore_caller_regs el3
 	eret
 end_vector_entry SErrorA64
 

@@ -959,7 +959,7 @@
 #define CNTP_CTL_ISTATUS_SHIFT	U(2)
 
 #define CNTP_CTL_ENABLE_MASK	U(1)
-#define CNTP_CTL_IMASK_MASK	U(1)
+#define CNTP_CTL_IMASK_MASK		U(1)
 #define CNTP_CTL_ISTATUS_MASK	U(1)
 
 /* Physical timer control macros */

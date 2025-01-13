@@ -1,26 +1,17 @@
 /**********************************************************************************
- * FILE : el_switch_test.c
+ * FILE : user_main.c
  * Description:
  * Author: Kevin He
- * Created On: 2025-01-06 , At 19:37:11
+ * Created On: 2025-01-13 , At 15:54:18
  * Modifiled On : 
  * Version : 0.0.1
  * Information :
  **********************************************************************************/
 
-#include "el_switch_test.h"
-#include <arch_helpers.h>
-#include <log.h>
+#include "user_main.h"
 
-
-
-void el1_entry(void)
+__attribute__((section(".user.fuc")))
+void user_main(void)
 {
-    LOG_DEBUG("cur_el is %d\n", get_current_el());
-    write_daifclr(0b111);
-	isb();
+
 }
-
-
-
-

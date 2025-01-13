@@ -47,6 +47,11 @@ SECTIONS
     *(.rela*)
     __rel_dyn_end = .;
     } > SRAM
+/*    
+    .ns_func :{
+        *(.user.fuc*)
+    } > DDR AT > ROM
+*/
     image_end =  LOADADDR(.bss);
     . = ALIGN(8);
     bss_begin = .;

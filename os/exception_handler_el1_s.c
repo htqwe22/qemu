@@ -8,8 +8,7 @@
  * Information :
  **********************************************************************************/
 #include <exception_common.h>
-
-
+extern void user_irq_handler(uint32_t INITID);
 void el1_s_sync_handler(uint64_t offset)
 {
     uint64_t FP;
@@ -22,10 +21,18 @@ void el1_s_sync_handler(uint64_t offset)
 
 void el1_s_irq_handler(uint64_t offset)
 {
+#if 0
     uint64_t FP;
     asm volatile ("mov %0, fp\n" : "=r" (FP));
     excep_info(offset,1);
     debug_callstack((void *)FP);
+#else
+    // lower 24 bits for INTID
+    uint32_t INTID = (uint32_t)read_icc_iar1_el1() & 0xffffff;
+    user_irq_handler(INTID);
+    write_icc_eoir1_el1(INTID); // end of interrupt
+    //when EOImode = 1; need to call write_icc_idr1_el1(INTID); // interrupt done
+#endif
 }
 
 

@@ -101,12 +101,20 @@
 
 
 
-	
-#define SCRATCH_REG_SIZE #(22 * 8)
-// save takes 13 instruction
+/**
+ * 影响的寄存器有 sp, X29, X30，elr, spsr, x0 - x18 (这里我们只保存到X15)
+ * SP:在这里不用保存，因为整个中断过程SP都能恢复刚刚进入中断的值（不管是否发生SP的切换）
+ *    在未发生SP切换的时候，SP指向栈顶，这样就不会有踩踏。
+ * X29也不用保存，是因为在汇编中没有保存，但我们也没有修改，但当中断进入正常C函数时会有保存和恢复
+ * X30：可能需要保存， 发生中断的时候x30已经保存，但如果在执行bl语句的时候产生了中断，这个时候可能有问题
+ * elr, spsr，这个在发生异常的时候，硬件也会直接修改，
+ * 综上：所以需要保存的寄存器是硬件直接修改的，然后被调用者可以直接使用的（调用者必须保存的寄存器）
+ * 由于32条指令的限制，x16-x18没有保存
+ * 使用以下的中断过程，会使用到28条指令（包含ERET），还有4条指令的自由发挥空间
+ */
+#define SCRATCH_REG_SIZE (22 * 8)
 	.macro save_caller_regs el_n
-	sub	sp, sp, SCRATCH_REG_SIZE
-	stp	x0, x1, [sp]
+	stp x0, x1, [sp, #-SCRATCH_REG_SIZE]! // now sp move
 	stp	x2, x3, [sp, #0x10]
 	stp	x4, x5, [sp, #0x20]
 	stp	x6, x7, [sp, #0x30]
@@ -116,12 +124,15 @@
 	stp	x14, x15, [sp, #0x70]
 	stp	x16, x17, [sp, #0x80]
 	stp	x18, x30, [sp, #0x90]
-	mrs x30, elr_\el_n
-	stp x29, x30, [sp, #0xa0] // x30 is elr
+	mrs x14, elr_\el_n		//save elr, spsr
+	mrs x15, spsr_\el_n
+	stp x14, x15,   [sp, #0xa0]
 	.endm
 
 	.macro restore_caller_regs el_n
-	
+	stp x14, x15, [sp, #0xa0]
+	msr elr_\el_n,  x14		//restore elr, spsr
+	msr spsr_\el_n, x15
 	ldp	x0, x1, [sp]
 	ldp	x2, x3, [sp, #0x10]
 	ldp	x4, x5, [sp, #0x20]
@@ -131,9 +142,7 @@
 	ldp	x12, x13, [sp, #0x60]
 	ldp	x14, x15, [sp, #0x70]
 	ldp	x16, x17, [sp, #0x80]
-	ldp	x29, x30, [sp, #0xa0] // x30 is elr
-	msr elr_\el_n, x30		  // restore elr	
-	ldp	x18, x30, [sp, #0x90] // is real x30
+	ldp	x18, x30, [sp, #0x90]
 	add	sp, sp, SCRATCH_REG_SIZE
 	.endm
 

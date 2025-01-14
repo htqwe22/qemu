@@ -8,8 +8,6 @@
 .macro save_task_context eln
     // here x0 x1 is not real ...
     // stp x0, x1,     [x0, #(GENERAL_REG_OFFSET)]
-    mov x1, sp
-    str x1,         [x0] //save sp ...
     stp x2, x3,     [x0, #(GENERAL_REG_OFFSET + 0x10)]
     stp x4, x5,     [x0, #(GENERAL_REG_OFFSET + 0x20)]
     stp x6, x7,     [x0, #(GENERAL_REG_OFFSET + 0x30)]
@@ -55,8 +53,8 @@
 .endm
 
 
-    .global task_context_switch
-task_context_switch:
+    .global schedule
+schedule:
     // save real x0, x1
     stp x0, x1, [sp, #-16]!
     ldr x1, =g_current_tcb
@@ -64,6 +62,8 @@ task_context_switch:
     save_task_context el1
     ldp x2, x1, [sp], #16
     stp x2, x1,     [x0, #(GENERAL_REG_OFFSET)]
+    mov x1, sp
+    str x1,         [x0] //save sp ...
     dsb sy
     isb 
     

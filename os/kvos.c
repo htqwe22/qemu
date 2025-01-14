@@ -87,6 +87,7 @@ static void idle_thread(void *arg)
     while (1)
     {
         num++;
+        schedule();
     }
     // never exit ...
 }
@@ -95,7 +96,7 @@ void task_start_schedule(void)
 {
     extern void start_first_task(kv_tcb_t *tcb);
     asm volatile("msr daifset, #3\n");
-//    (void)kv_thread_create("idle", 2048, NULL, 8, idle_thread, NULL);
+    (void)kv_thread_create("idle", 2048, NULL, 8, idle_thread, NULL);
     kv_tcb_t *tcb = list_first_entry(&active_list, kv_tcb_t, member);
     start_first_task(tcb);
     // never return...

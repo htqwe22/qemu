@@ -85,22 +85,24 @@ static void sys_timer_callback(void *arg)
 
 static void main_task(void *arg)
 {
-    uint32_t cng = g_cnt;
+    uint32_t cnt;
     for (;;) {
+        cnt = g_cnt;
         kv_printf("main task run ...\n");
-   //     while(cng == g_cnt);
-        task_context_switch();
+        while(cnt == g_cnt);
+        schedule();
  //       do_shell_loop();
     }
 }
 
 static void second_task(void *arg)
 {
-    uint32_t cng = g_cnt;
+    uint32_t cnt;
     for (;;) {
+        cnt = g_cnt;
         kv_printf("second_task run ...\n");
-  //      while(cng == g_cnt);
-        task_context_switch();
+        while(cnt == g_cnt);
+        schedule();
  //       do_shell_loop();
     }
 }

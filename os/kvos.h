@@ -26,7 +26,7 @@ kv_tid_t kv_thread_create(const char *name, uint32_t stack_size, uint64_t *stack
 
 void task_start_schedule(void);
 
-void task_context_switch(void);
+void schedule(void);
 
 #ifdef __cplusplus
 }

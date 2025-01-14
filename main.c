@@ -15,9 +15,11 @@
 #include <aarch64_mmu.h>
 #include <el_switch_test.h>
 #include <exception_common.h>
+#include <arch_helpers.h>
 #include <asm_func.h>
 #include <app_int.h>
 #include <drv_sys_timer.h>
+#include <kvos.h>
 
 
 extern void asm_test(uint64_t arr[]);
@@ -26,6 +28,7 @@ extern int do_shell_loop(void);
 
 extern int image_end;
 extern int bss_begin;
+static void main_task(void *arg);
 
 static void spi_interrupt_handler(void *arg)
 {
@@ -60,10 +63,21 @@ int main(int argc, char **argv)
     gic_configure_interrupt(30, 3, GROUP1_S, TRIGGER_LEVEL, getAffinity(), sys_timer_interrupt_handler, NULL);
     gic_configure_interrupt(33, 3, GROUP1_S, TRIGGER_EDGE, getAffinity(), spi_interrupt_handler, NULL);
     
-    
     switch_to_el1(el1_entry, 0);
     sys_timer_init(1000000);
     gic_set_interrupt_pending(33, getAffinity());
-    do_shell_loop();
+
+    kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);
+    task_start_schedule();
+    for (;;);
     return 0;
+}
+
+
+static void main_task(void *arg)
+{
+    kv_printf("main task run ...\n");
+    for (;;) {
+        do_shell_loop();
+    }
 }

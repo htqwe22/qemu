@@ -68,6 +68,8 @@ void sys_timer_interrupt_handler(void *arg)
     sys_timer_restore();
     isb();
     write_cntp_ctl_el0(1);
+
+//    asm volatile ("svc #0\n");
 }
 
 #if 0

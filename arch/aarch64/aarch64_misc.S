@@ -119,3 +119,27 @@ func switch_to_el0
 	dsb	sy
 	isb
 endfunc
+
+	.global test_print
+func test_print
+	stp x29, x30, [sp, #-496]!
+	mov x29, sp
+	str x0, [sp, #56]
+	str x1, [sp, #440] 
+	str x2, [sp, #448] 
+	str x3, [sp, #456] 
+	str x4, [sp, #464] 
+	str x5, [sp, #472] 
+	str x6, [sp, #480] 
+	str x7, [sp, #488] 
+	str q0, [sp, #304] 
+	str q1, [sp, #320] 
+	str q2, [sp, #336] 
+	str q3, [sp, #352] 
+	str q4, [sp, #368] 
+	str q5, [sp, #384] 
+	str q6, [sp, #400] 
+	str q7, [sp, #416] 
+	ldp x29, x30, [sp], #496
+	ret
+endfunc	

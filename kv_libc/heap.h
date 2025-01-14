@@ -7,8 +7,8 @@
 
 
 
-#define portBYTE_ALIGNMENT                      8
-#define portBYTE_ALIGNMENT_MASK                 7
+#define portBYTE_ALIGNMENT                      16
+#define portBYTE_ALIGNMENT_MASK                 15
 typedef unsigned int BaseType_t;
 
 // following is for porting ...

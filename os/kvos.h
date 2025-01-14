@@ -13,37 +13,18 @@
 #include <stdint.h>
 #include <plat_def.h>
 #include <heap.h>
+#include <list.h>
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define FP_EN   0
+typedef void * kv_tid_t;
 
-typedef struct 
-{
-    uint64_t sp;
-    uint64_t pc;
-    uint64_t pstate;
-    uint64_t elr;
-    uint64_t spsr;
-    uint64_t general_regs[31]; //x0-x30
-#if FP_EN    
-    uint64_t v[32][2]; //v0-v31
-    uint64_t fpcr;
-    uint64_t fpsr;
-#endif
-    heap_ctx_t heap;
-}kv_tcb_t;
+kv_tid_t kv_thread_create(const char *name, uint32_t stack_size, uint64_t *stack_pointer, uint32_t priority, void (*entry)(void *), void *arg);
 
-
-
-
-
-
-
-
-
+void task_start_schedule(void);
 
 #ifdef __cplusplus
 }

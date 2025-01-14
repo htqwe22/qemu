@@ -4,7 +4,7 @@ override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
 override LOCAL_OBJS :=  exception_common.o 	exception_handler_el3.o exception_handler_el1_s.o exception_handler_el1_ns.o \
-					kvos.o
+					kvos.o	task_help.o
 
 
 

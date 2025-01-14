@@ -15,7 +15,8 @@
 extern "C" {
 #endif
 
-int sys_timer_init(uint32_t interval_us);
+
+int sys_timer_init(uint32_t interval_us, void (*callback)(void *), void *arg);
 
 void sys_timer_stop(void);
 

@@ -31,7 +31,7 @@
 .endm
 
 .macro restore_task_context eln
-    str x1, [x0]
+    ldr x1, [x0]
     mov sp, x1      //restore sp ...
     ldp x2, x3,     [x0, #8]
     msr elr_\eln, x2
@@ -51,18 +51,19 @@
     ldp x26, x27,   [x0, #(GENERAL_REG_OFFSET + 0xd0)] 
     ldp x28, x29,   [x0, #(GENERAL_REG_OFFSET + 0xe0)]
     ldr x30,        [x0, #(GENERAL_REG_OFFSET + 0xf0)]
+    ldp x0, x1,     [x0, #GENERAL_REG_OFFSET] // restore x0 at the end
 .endm
 
 
-
+    .global task_context_switch
 task_context_switch:
     // save real x0, x1
     stp x0, x1, [sp, #-16]!
     ldr x1, =g_current_tcb
     ldr x0, [x1]    // get the value of g_current_tcb
     save_task_context el1
-    ldp x0, x1, [sp], #16
-    stp x0, x1,     [x0, #(GENERAL_REG_OFFSET)]
+    ldp x2, x1, [sp], #16
+    stp x2, x1,     [x0, #(GENERAL_REG_OFFSET)]
     dsb sy
     isb 
     
@@ -73,6 +74,7 @@ task_context_switch:
     ldr x1, =g_current_tcb
     str x0, [x1]    // g_current_tcb = current tcb
     restore_task_context el1
+
 
     dsb sy
     isb 

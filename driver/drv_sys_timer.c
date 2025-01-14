@@ -32,8 +32,9 @@
 */
 
 static uint64_t tval;
-
-int sys_timer_init(uint32_t interval_us)
+static void (*timer_callback)(void *);
+static void *timer_arg;
+int sys_timer_init(uint32_t interval_us, void (*callback)(void *), void *arg)
 {
     uint64_t g_cntp_freq;
     uint64_t ctl = 1;
@@ -44,7 +45,8 @@ int sys_timer_init(uint32_t interval_us)
     LOG_DEBUG("cnt freq: %luK\n", g_cntp_freq/1000);
     tval = interval_us * g_cntp_freq / 1000000; // 1000000us = 1s
     write_cntp_tval_el0(tval);
-    
+    timer_callback = callback;
+    timer_arg = arg;
     // enable ...
     write_cntp_ctl_el0(ctl);
     return 0;
@@ -63,8 +65,10 @@ void sys_timer_restore(void)
 void sys_timer_interrupt_handler(void *arg)
 {
     sys_timer_stop();
-    LOG_DEBUG("sys timer interrupt\n");
-
+//    LOG_DEBUG("sys timer interrupt\n");
+    if (timer_callback) {
+        timer_callback(timer_arg);
+    }
     sys_timer_restore();
     isb();
     write_cntp_ctl_el0(1);

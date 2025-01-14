@@ -29,6 +29,8 @@ extern int do_shell_loop(void);
 extern int image_end;
 extern int bss_begin;
 static void main_task(void *arg);
+static void second_task(void *arg);
+static void sys_timer_callback(void *arg);
 
 static void spi_interrupt_handler(void *arg)
 {
@@ -64,20 +66,41 @@ int main(int argc, char **argv)
     gic_configure_interrupt(33, 3, GROUP1_S, TRIGGER_EDGE, getAffinity(), spi_interrupt_handler, NULL);
     
     switch_to_el1(el1_entry, 0);
-    sys_timer_init(1000000);
+    sys_timer_init(500000, sys_timer_callback, NULL);
     gic_set_interrupt_pending(33, getAffinity());
 
-    kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);
-    task_start_schedule();
+   kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);
+   kv_thread_create("subTask", 0x1000, NULL, 1, second_task, NULL);
+   task_start_schedule();
     for (;;);
     return 0;
 }
 
+static volatile uint32_t g_cnt = 0;
+static void sys_timer_callback(void *arg)
+{
+    kv_printf("sys timer callback\n");
+    g_cnt++;
+}
 
 static void main_task(void *arg)
 {
-    kv_printf("main task run ...\n");
+    uint32_t cng = g_cnt;
     for (;;) {
-        do_shell_loop();
+        kv_printf("main task run ...\n");
+   //     while(cng == g_cnt);
+        task_context_switch();
+ //       do_shell_loop();
+    }
+}
+
+static void second_task(void *arg)
+{
+    uint32_t cng = g_cnt;
+    for (;;) {
+        kv_printf("second_task run ...\n");
+  //      while(cng == g_cnt);
+        task_context_switch();
+ //       do_shell_loop();
     }
 }

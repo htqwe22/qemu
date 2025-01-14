@@ -10,6 +10,7 @@
 
 #include "kvos.h"
 #include <string.h>
+#include <log.h>
 
 #define FP_EN   0
 typedef enum thread_state
@@ -69,8 +70,11 @@ kv_tid_t kv_thread_create(const char *name, uint32_t stack_size, uint64_t *stack
         tcb->stack_size = stack_size;
         tcb->priority = priority;
         tcb->pc = (uint32_t *)entry;
-        tcb->cur_sp = tcb->stack_pointer + (stack_size >> 3); // set as the top of the stack
+        // for routine compatable.
         tcb->general_regs[30] = (uint64_t)tcb->pc;
+//        LOG_DEBUG("lr at %p value %x\n", &tcb->general_regs[30], tcb->general_regs[30]);
+        tcb->cur_sp = tcb->stack_pointer + (stack_size >> 3); // set as the top of the stack
+//        LOG_DEBUG("TCB (%s) at %p, sp bottom at %p, entry at %p\n", name, tcb, tcb->cur_sp, tcb->pc);
     }
     list_add_tail(&tcb->member, &active_list);
     return tcb;
@@ -91,7 +95,7 @@ void task_start_schedule(void)
 {
     extern void start_first_task(kv_tcb_t *tcb);
     asm volatile("msr daifset, #3\n");
-    (void)kv_thread_create("idle", 2048, NULL, 8, idle_thread, NULL);
+//    (void)kv_thread_create("idle", 2048, NULL, 8, idle_thread, NULL);
     kv_tcb_t *tcb = list_first_entry(&active_list, kv_tcb_t, member);
     start_first_task(tcb);
     // never return...
@@ -99,11 +103,12 @@ void task_start_schedule(void)
 
 kv_tcb_t *fetch_next_run_task(void)
 {
+    kv_tcb_t *tcb = list_first_entry(&g_current_tcb->member, kv_tcb_t, member);
     while (1) {
-        kv_tcb_t *tcb = list_first_entry(&g_current_tcb->member, kv_tcb_t, member);
         if (&tcb->member != &active_list) {
             // check the priority...
             return tcb;
         }
+        tcb = list_first_entry(&tcb->member, kv_tcb_t, member);
     }
 }

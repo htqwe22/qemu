@@ -59,6 +59,7 @@ SECTIONS
         *(.bss)
         *(.bss*)
     } > SRAM
+    . = ALIGN(8);
     bss_end = .;
     .ddr_data (NOLOAD) : {
         . = ALIGN(4096);

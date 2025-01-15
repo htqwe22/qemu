@@ -91,6 +91,7 @@ static void main_task(void *arg)
         kv_printf("main task run ...\n");
         while(cnt == g_cnt);
         schedule();
+        kv_printf("main task run over\n");
  //       do_shell_loop();
     }
 }
@@ -103,6 +104,7 @@ static void second_task(void *arg)
         kv_printf("second_task run ...\n");
         while(cnt == g_cnt);
         schedule();
+        kv_printf("second_task run over\n");
  //       do_shell_loop();
     }
 }

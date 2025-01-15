@@ -7,6 +7,8 @@
 
 .macro save_task_context eln
     // here x0 x1 is not real ...
+    mov x1, sp
+    str x1,         [x0] //save sp ...
     // stp x0, x1,     [x0, #(GENERAL_REG_OFFSET)]
     stp x2, x3,     [x0, #(GENERAL_REG_OFFSET + 0x10)]
     stp x4, x5,     [x0, #(GENERAL_REG_OFFSET + 0x20)]
@@ -56,14 +58,15 @@
     .global schedule
 schedule:
     // save real x0, x1
-    stp x0, x1, [sp, #-16]!
+    stp x0, x1, [sp, #-16]
     ldr x1, =g_current_tcb
     ldr x0, [x1]    // get the value of g_current_tcb
+
     save_task_context el1
-    ldp x2, x1, [sp], #16
+    
+    ldp x2, x1, [sp, #-16]
     stp x2, x1,     [x0, #(GENERAL_REG_OFFSET)]
-    mov x1, sp
-    str x1,         [x0] //save sp ...
+
     dsb sy
     isb 
     

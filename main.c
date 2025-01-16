@@ -69,6 +69,8 @@ int main(int argc, char **argv)
     sys_timer_init(500000, sys_timer_callback, NULL);
     gic_set_interrupt_pending(33, getAffinity());
 
+    gic_its_init(0, 1024);
+
    kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);
    kv_thread_create("subTask", 0x1000, NULL, 1, second_task, NULL);
    task_start_schedule();

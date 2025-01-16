@@ -44,6 +44,17 @@ void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t
 
 void create_2m_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs);
 
+typedef enum
+{
+    PAGE_ALIGN_4K = 1,
+    PAGE_ALIGN_16K = 4,
+    PAGE_ALIGN_64K = 16,
+}page_align_t;
+
+void *alloc_page_table_aligned(page_align_t align, int num_of_4K);
+
+void free_page_table_aligned(void *page);
+
 #ifdef __cplusplus
 }
 #endif

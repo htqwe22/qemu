@@ -10,10 +10,12 @@
 
 #include "app_int.h"
 #include <gicv3_basic.h>
+#include <gicv3_lpis.h>
 #include <asm_func.h>
 #include <plat_def.h>
 #include <arch_helpers.h>
 #include <log.h>
+#include <mem_map.h>
 
 // rd_base， 其中rd表示redistributor
 
@@ -87,6 +89,19 @@ static int local_unregister_irq_handler(uint32_t intid)
     return -1;
 }
 
+
+void write64_separately(volatile uint64_t *addr, uint64_t val)
+{
+    volatile uint32_t *ptr = (volatile uint32_t *)addr;
+    *ptr++ = (val >> 32)& 0xffffffff;
+    *ptr = val & 0xffffffff;
+}
+
+uint64_t read64_separately(volatile uint64_t *addr)
+{   
+   volatile uint32_t *ptr = (volatile uint32_t *)addr;
+   return ((uint64_t)*ptr << 32) | *(ptr + 1);
+}
 
 void debug_gicd(void)
 {
@@ -190,7 +205,7 @@ void gic_current_pe_init(void)
      /**
       * CBPR = 0, EOI = 0, PMHE = 1, 
      */
-     icc_ctrl = 1 << 6;
+    icc_ctrl = 1 << 6;
     setICC_CTLR_EL1(icc_ctrl);
 
     //here we can use ICH_* & ICC_* to access CPU Interface registers 
@@ -273,3 +288,260 @@ int gic_set_interrupt_pending(int INTID, uint32_t target_affi)
     return setIntPending(INTID, rd);
 }
 
+
+uint64_t debug_its_typer(void)
+{
+    uint64_t its_typer = gic_its->GITS_TYPER;
+    uint32_t tmp;
+    LOG_DEBUG("============== ITS_TYPER ==================\n");
+    LOG_DEBUG("INV(cache disable when invalid): %d\n", (its_typer >> 46) & 1);
+    LOG_DEBUG("UMSIirq support: %d\n", (its_typer >> 45) & 1);
+    LOG_DEBUG("UMSI: %d\n", (its_typer >> 44) & 1);
+    tmp = 16;
+    if (its_typer & (1ul << 36)) {
+        tmp = (its_typer >> 32) & 0xf;
+    }
+    LOG_DEBUG("CLI(Collection ID size ): %d\n",tmp);
+    LOG_DEBUG("HCC(Hardware Collection Count): %d\n",(its_typer >> 24) & 0xff);
+    LOG_DEBUG("PTA(Physical Target Addresses defined by): %s\n", its_typer & (1ul << 19) ? "physical address":"PE Number");
+    LOG_DEBUG("Devbits(DeviceID bits): %d\n", ((its_typer >> 13) & 0x1f) + 1);
+    LOG_DEBUG("ID_bits(EventID bits): %d\n", ((its_typer >> 8) & 0x1f) + 1);
+    LOG_DEBUG("ITT_entry_size(transfer entry): %d\n", ((its_typer >> 4) & 0x1f) + 1);
+    LOG_DEBUG("CCT(Cumulative Collection Tables): %d (choice)\n", (its_typer >> 2) & 1);
+    LOG_DEBUG("supports physical LPI : %d (choice)\n", its_typer & 1);
+    return its_typer;
+}
+
+/** UM MSI,是指没有通过ITS而发送的MSI。MSI可以映射为（一般UM MSI）SPI，也可映射为（通过ITS转换成）LPI
+ * 注意64位的寄存器有可能要求是按2个32位来访问的，文档会有描述
+ * 表的配置有(0-7共8个表，每个表配置一种table)
+ * 1. plat(0), 2-level (1)
+ * 2. 有cache属性， 我们选择 0b110，Inner, Read-allocate, Write-allocate, Write-through
+ *    外部cache属性：我们选择 1，没有外部cache
+ * 3. 共享属性：0b01,设置成内部共享
+ * 4. 表类型设置：1:device table; 2:vPES; 4: collections
+ * 5. 要读取entry_size来决定每个entry有多大,这个是只读的
+ * 6. 设置表的物理地址（低12位为0，但要求和Page size对齐）
+ * 7. 定义Page size
+ * 8. 本表的大小 n; 表示使用了多少个物理pages，比如n=0,表示 (n+1)个page
+ * 9. 使用有效
+ * ------------------------------------------------------------------
+ * ITS command的环形表
+ * 1. 内部和外部的cache属性
+ * 2. 共享属性
+ * 3. 物理地址（64K对齐，大小要求4K的倍数 [15:12]要求为0b0000）
+ * 4. size: 真实的bytes大小为(size+1) *4K
+ * --------------------------------------------
+ * ITS 控制寄存器
+ * 1.可以读取ITS操作是否都已经完成，用于power management
+ * 2. UMSIirq。用于控制Unmaped MSI中断是能，这里我们不涉及这种中断，先用0禁用掉
+ * 3. ITS_Number:针对GICv4的，用于设置ITS的实例个数。
+ * 4. ITS使能
+ * 可以判断ITS命令是否完成
+ * ---------------------------------------
+ * 读写指针的控制，当出现错误后，可以通过读写retry bit位来实现该command的复位
+ * 从名字上来看，应该只影响错误的这个command，让其恢复到未写之前的位置
+ * 可以通过读GICI_IIDR来识别ITS的base地址是否设置正确
+ * 
+ * PMG, PARTID是什么用的？
+ * ----------------------------------------------------------------
+ * ITS SGI 产生一个虚拟的SGI（V4）
+ * ITS状态寄存器 GITS_STATUSR，可查看配置错误原因
+*/
+void its_set_lpi_config_table_addr(uint32_t rd, uint64_t addr, uint64_t attributes, uint32_t INTIDbits)
+{
+    // GICI_BASERD[rd] = addr;
+    uint64_t tmp = 0;
+    tmp = (uint64_t)addr;
+    tmp |= (uint64_t)attributes << 32;
+    tmp |= (uint64_t)INTIDbits << 48;
+ //   gic_its->GITS_LPICFG[rd] = tmp;
+
+
+}
+
+/**
+ * LPI 支持两种类型的中断其中之一：
+ * 1. 使用ITS转换的LPI （目前使用这种，物理的ITS至少要有一个用于接收MSI,然后将MSI转化成LPI）
+ * 2. 直接使用LPI（这种情况不需要ITS的支持，直接将LPI中断发送到RD）
+ * 3. LPI主要通过配置GICR（RD）来实现（支持最小8K的中断个数）
+ *    因为中断源多，其相关的配置由table来配合实现，主要是以下两种table（需要在非安全的地址空间来定义）
+ *    3.1 实现每个中断的配置（优先级和enable） (全局的 table)
+ *        在GICD.DS=0时，LPI总是非安全group1的中断
+ *                 =1时，LPI是group1中断
+ *        全局配置修改后需要写GICR_INV或GICR_IINVALL命令来实现更新。
+ *    3.2 实现每个中断的Pending （每个GICR独有的）
+ *    3.3 LPI还有一个enbale位，用于控制RD到PE的LPI通路
+ * 
+*/
+int gic_lpi_init(uint32_t rd, uint32_t lpi_id_num)
+{
+    //单个的LPI的空间大小由GICR_PROPBASER.ID来决定，整个LPI配置的最大值由GICD_TYPER.IDbits来决定
+    // 以上说的是一回事，LPI的配置大小的上限受限于GICD
+    uint32_t gicd_typer = getGICDTyper();
+    uint32_t max_id_bits = ((gicd_typer >> 19) & 0x1f) + 1;
+ //   uint32_t max_id = 1u << (max_id_bits + 1);
+    uint32_t id_bits;
+
+    // Get the minimum id_bits
+    for (id_bits = 14; id_bits <= max_id_bits; id_bits++) {
+        if (( 1 << id_bits ) >= (lpi_id_num + 8192))
+            break;
+    }
+    if ((1 << id_bits ) > (lpi_id_num + 8192)) {
+        LOG_ERROR("id_bits reaches ID bits define in GICD\n");
+        return -1;
+    }
+   // lpi_id_num = (1ull << id_bits) - 8192;
+
+    uint32_t num = 1;
+    // 4KB is large enough.
+    void *p_pending_table = alloc_page_table_aligned(PAGE_ALIGN_64K, num);
+    // clear the pending table
+    uint64_t tmp;
+    // cause eatch lpi tasks only one bits.
+    tmp = 1ull << (id_bits - 3); 
+    memset(p_pending_table, 0, tmp);
+
+    //set GICR_PENDBASER
+    // 0b110 cacheable, write-allocate, read-allocate, write-through
+    // 0b01 at bit10; Inner Shareable
+    tmp = (0b110ull << 7) | (0b01ull << 10) | (uint64_t)p_pending_table; // & 0x0000FFFFFFFF0000
+    // setLPIPendingTableAddr;
+    gic_rdist[rd].lpis.GICR_PENDBASER = tmp;
+
+    // set GICR_PROPBASER for eatch rd. and use the same prop_table.
+    static void *sh_prop_table = NULL;
+    if (sh_prop_table == NULL) {
+        tmp = 4096;
+        for (; tmp < lpi_id_num; tmp += 4096);
+        sh_prop_table = alloc_page_table_aligned(PAGE_ALIGN_4K, tmp >> 12);
+        // cause eatch lpi tasks one byte.
+        memset(sh_prop_table, 0, lpi_id_num);
+    }
+    // Outer & Inner Shareable, inner share.
+    tmp = (0b110ull << 56) | (0b110ull << 7) | (0b10ull << 10) | (uint64_t)sh_prop_table | \
+            ((id_bits - 1) & 0x1f); // & 0x0000FFFFFFFF0000
+    gic_rdist[rd].lpis.GICR_PROPBASER = tmp;
+    //Note: latter, we will set the priority and enable bits in the prop_table when we use.
+    return 0;
+}
+
+int gic_its_init(uint32_t rd, uint32_t lpi_id_num)
+{
+    setITSBaseAddress((void *)GICI_BASE);
+    uint64_t its_typer = debug_its_typer();
+    uint32_t devid_bits = ((its_typer >> 13) & 0x1f) + 1;
+    uint32_t evid_bits = ((its_typer >> 8) & 0x1f) + 1;
+
+    // 1. Check the right table for Device Table 
+    uint64_t tmp;
+    int idx;
+    //here page size maybe RO.
+    uint32_t page_size = 0; 
+
+    uint32_t dev_idx = 0xff, collection_idx = 0xff;
+    uint32_t dev_entry_size, collection_entry_size;
+    uint32_t type, entry_size;
+    for (idx = 0; idx < 8; idx++) {
+        getITSTableType(idx, &type, &entry_size);
+        LOG_DEBUG("idx %d, type %d, pg_size %d, entry_size %d\n", idx, type, (gic_its->GITS_BASER[idx] >> 8) & 3, entry_size);
+        if (type == 1) {
+            dev_idx = idx;
+            dev_entry_size = entry_size + 1;
+        }else if (type == 4) {
+            collection_idx = idx;
+            collection_entry_size = entry_size + 1;
+        }
+        if (dev_idx != 0xff && collection_idx != 0xff)
+            break;
+    }
+    if (idx == 8) {
+        LOG_ERROR("get its table type failed\n");
+        return -1;
+    }
+
+    void *table;
+    uint64_t config_value;
+    uint32_t size = 1;
+
+    table = alloc_page_table_aligned(PAGE_ALIGN_64K, size);
+    memset(table, 0, size * 4096);
+    // Command queue table ...
+    config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
+         |(0b10 << 10) |  (size -1) | (uint64_t)table;
+    write64_separately(&gic_its->GITS_CBASER, config_value);
+
+    // FOR DEV table
+    // page size is 4k
+    // page num = 0
+    // Outer share  2 << 10;
+    // 
+    // TODO: let page size = 0 or page_size = 1; or page_size = 2;
+
+    size = 1;
+#if 0   // we just use 4k for now.
+    uint32_t table_size = (1ull << evid_bits) * dev_entry_size;
+    for (size = 4096; size < table_size; size += 4096);
+    size >>= 12; // /4K
+#else
+    (void)devid_bits;
+    (void)dev_entry_size;    
+#endif
+    switch (page_size)
+    {
+    case 0:
+        table = alloc_page_table_aligned(PAGE_ALIGN_4K, size);
+        break;
+    case 1:
+        table = alloc_page_table_aligned(PAGE_ALIGN_16K, size);
+        break;
+    case 2:
+        table = alloc_page_table_aligned(PAGE_ALIGN_16K, size);
+        break;
+    default:
+        LOG_ERROR("PAGE sie wrong %d\n", page_size);
+       return -2;
+    }
+
+    memset(table, 0, size * 4096);
+    size -= 1;
+    // single level, normal cache. outer sheareable
+    tmp = (1ull << 63) | (0ull << 62) | (0b110ull << 59) | (0b110ull << 53) \
+         |(0b10 << 10) |  (page_size << 8) ;
+    config_value = tmp | ((uint64_t)table | size);
+    write64_separately(&gic_its->GITS_BASER[dev_idx], config_value);
+
+    //configure collection table
+    size = 1;
+#if 0   // we just use 4k for now.
+    uint32_t table_size = (1ull << devid_bits) * dev_entry_size;
+    for (size = 4096; size < table_size; size += 4096);
+    size >>= 12; // /4K
+#else
+    (void)evid_bits;
+    (void)collection_entry_size;    
+#endif
+    switch (page_size)
+    {
+    case 0:
+        table = alloc_page_table_aligned(PAGE_ALIGN_4K, size);
+        break;
+    case 1:
+        table = alloc_page_table_aligned(PAGE_ALIGN_16K, size);
+        break;
+    case 2:
+        table = alloc_page_table_aligned(PAGE_ALIGN_16K, size);
+        break;
+    default:
+        LOG_ERROR("PAGE sie wrong %d\n", page_size);
+       return -2;
+    }
+    memset(table, 0, size * 4096);
+    size -= 1;
+    // tmp = (1ull << 63) | (0ull << 62) | (0b110ull << 59) | (0b110ull << 53) 
+    //     | (uint64_t)table |(0b10 << 10) |  (page_size << 8) | size;
+    config_value = tmp | ((uint64_t)table | size);
+    write64_separately(&gic_its->GITS_BASER[collection_idx], config_value);
+    return 0;
+}

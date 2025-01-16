@@ -49,8 +49,7 @@ irq_trigger_t trigger, uint32_t target_affi, irq_handler_t handler, void *priv_a
 
 int gic_set_interrupt_pending(int INTID, uint32_t target_affi);
 
-
-
+int gic_its_init(uint32_t rd, uint32_t lpi_id_num);
 
 #ifdef __cplusplus
 }

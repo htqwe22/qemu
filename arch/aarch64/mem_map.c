@@ -24,8 +24,15 @@
 
 SECTION_PAGE
 struct page_table_4k tables[TABLE_NR];
-SECTION_DDR
-char aloc_flag[TABLE_NR];
+
+union alloc_flag{
+    uint16_t value;
+    struct {
+        uint16_t valid  : 1;
+        uint16_t num    : 7;
+        uint16_t align : 8;
+    };
+}alloc_flag_table[TABLE_NR] SECTION_DDR;
 
 
 /*
@@ -124,8 +131,8 @@ struct page_table_4k *alloc_page_table(void)
 {
     int i = 0;
     for (i = 0; i < TABLE_NR; i++) {
-        if (aloc_flag[i] == 0) {
-            aloc_flag[i] = 1;
+        if (alloc_flag_table[i].valid == 0) {
+            alloc_flag_table[i].value = 1;
             return &tables[i];
         }
     }
@@ -138,20 +145,74 @@ struct page_table_4k *alloc_page_table(void)
     return NULL;
 }
 
+
+
+
+void *alloc_page_table_aligned(page_align_t align, int num_of_4K)
+{
+    int i = 0;
+    uint16_t end_idx;
+    for (i = 0; i < TABLE_NR; i += align) {
+        if (alloc_flag_table[i].valid) {
+            continue;
+        }
+        end_idx = i + num_of_4K;
+
+        for (int j = i; j < end_idx; j++) {
+            if (j >= TABLE_NR)
+                break;
+            if (alloc_flag_table[j].valid == 1) {
+                continue;
+            }
+        }
+        // find a sequential memory
+        for (int j = i; j < end_idx; j++) {
+            alloc_flag_table[j].valid = 1;
+            if (j == i) {
+                alloc_flag_table[j].num = num_of_4K;
+                alloc_flag_table[j].align = align;
+            }
+        }
+        return &tables[i];
+    }
+    LOG_ERROR("alloc aligned table fail, align %dK, size %d * 4K\n", align *4, num_of_4K);
+    uint64_t fp;
+    asm volatile("mov %0, x29":"=r" (fp));
+    debug_callstack((void *)fp);
+    read_actlr_el1();
+    for(;;);
+    return NULL;  
+}
+
+void free_page_table_aligned(void *page)
+{
+    struct page_table_4k *page_tabe = (struct page_table_4k *)page;
+    int i = page_tabe - tables;
+    union alloc_flag *flag = &alloc_flag_table[i];
+    uint16_t end_idx = i + flag->num;
+
+    for (int j = i; j < end_idx; j++) {
+        alloc_flag_table[j].value = 0;
+    }
+}
+
+
 void free_page_table(struct page_table_4k *page_tabe)
 {
+    free_page_table_aligned(page_tabe);
 #if 0    
     int i = 0;
     for (i = 0; i < TABLE_NR; i++) {
         if (&tables[i] == page_tabe) {
-            aloc_flag[i] = 0;
+            alloc_flag_table[i] = 0;
             return;
         }
     }
 #else
-    aloc_flag[page_tabe - tables] = 0;
+//    alloc_flag_table[page_tabe - tables].valid = 0;
 #endif
 }
+
 
 static inline struct page_table_4k *get_page_table(int el, uint64_t va)
 {
@@ -332,7 +393,7 @@ void mem_map_init(void)
     LOG_DEBUG("Configuring MMU for EL%d ...\n", cur_el);
     init_mmu_elx(cur_el);
     memset_64(tables, 0, sizeof(tables));
-    memset_64(aloc_flag, 0, sizeof(aloc_flag));
+    memset_64(alloc_flag_table, 0, sizeof(alloc_flag_table));
 
  #if 0
     create_2m_mapping(cur_el, SEC_ROM_BASE, SEC_ROM_BASE, 2*MB, ATTR_MEM_RO_EXE); // for .text

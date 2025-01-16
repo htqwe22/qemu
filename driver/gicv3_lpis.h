@@ -215,6 +215,10 @@ void itsSYNC(uint64_t target);
 // id     = EventID  (the value the peripheral would have written)
 void itsINT(uint32_t device, uint32_t event_id);
 
+
+extern struct GICv3_its_ctlr_if*     gic_its;
+extern struct GICv3_its_int_if*      gic_its_ints;
+
 #endif
 
 // ----------------------------------------------------------

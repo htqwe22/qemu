@@ -108,7 +108,7 @@ uint32_t setLPIPendingTableAddr(uint32_t rd, uint64_t addr, uint64_t attributes,
   // Zero table
   // This is ensure that all interrupts have a known (inactive) initial state
   // TBD: Fix memset to only clear required bytes!
-  tmp = 1 << IDbits;
+  tmp = 1 << IDbits; // THERE need to use tmp = (1 << IDBITS) >> 3
   memset((void*)addr, 0, tmp);
   __dsb();
 

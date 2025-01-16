@@ -27,7 +27,12 @@
         "typeinfo": "c",
         "gicv3_basic.h": "c",
         "asm_func.h": "c",
-        "exception_common.h": "c"
+        "exception_common.h": "c",
+        "*.tcc": "c",
+        "array": "c",
+        "initializer_list": "c",
+        "string_view": "c",
+        "utility": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

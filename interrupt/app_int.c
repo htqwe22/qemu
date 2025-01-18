@@ -19,120 +19,7 @@
 
 // rd_base， 其中rd表示redistributor
 
-/* 初始化流程可以参考文档中4章节,初始化的先后顺序和内容都涉及了
- * 根据框架图: Affinity Routing Enable
- * 全局配置
- * 整个SOC就一个Distributor和多个CPU Interface与Redistributor.
-   1. 先查到当前SOC共有多少个Redistributor （GICR_TYPER, Redistributor Type Register查看是否是最后一个）
-   2. 要使用ARE功能、Group的功能、1-of-N功能都在GICD_CTLR中定义
-   3. 注意写AER有要求group的en都为0，如果再想写group的en，需要再写group的控制位
-    ****************************
-   单PE配置
-   1. 唤醒PE
-   2. CPU interface配置( ICC_*)
-   3. 使能中断的group组功能 ICC_IGRPEN0_EL1/ICC_IGRPEN1_EL1
-   4. 配置中断优先级（ICC_PMR_EL1）和 优先级的分组（ICC_BPR0_EL1/ICC_BPR1_EL1）
-   5. 设置 EOI （EndOfInterrupt） ICC_CTLR_EL1/ ICC_CTLR_EL3 
- * 
- */
 
-struct interrupt_handler_map
-{
-    uint32_t intid;
-    irq_handler_t handler;
-    void *arg;
-};
-
-static struct interrupt_handler_map int_handler_map[10];
-
-void user_irq_handler(uint32_t INITID)
-{
-    for (int i = 0; i < ARRAY_SIZE(int_handler_map); i++) {
-        if (int_handler_map[i].intid == INITID) {
-            int_handler_map[i].handler(int_handler_map[i].arg);
-            return;
-        }
-    }
-    LOG_ERROR("intid: %d never been registered\n", INITID);
-}
-
-static int local_register_irq_handler(uint32_t intid, irq_handler_t handler, void *arg)
-{
-    // register interrupt handler ...
-    // check if the interrupt is already configuredin
-    for (int i = 0; i < ARRAY_SIZE(int_handler_map); i++) {
-        if (int_handler_map[i].intid == intid) {
-            return -1;
-        }
-    }
-    for (int i = 0; i < ARRAY_SIZE(int_handler_map); i++) {
-        if (int_handler_map[i].handler == NULL) {
-            int_handler_map[i].handler = handler;
-            int_handler_map[i].intid = intid;
-            int_handler_map[i].arg = arg;
-            return 0;
-        }
-    }
-    return -2;
-}
-
-static int local_unregister_irq_handler(uint32_t intid) 
-{
-    for (int i = 0; i < ARRAY_SIZE(int_handler_map); i++) {
-        if (int_handler_map[i].intid == intid) {
-            int_handler_map[i].handler = NULL;
-            int_handler_map[i].intid = 0;
-            return 0;
-        }
-    }
-    // not found
-    return -1;
-}
-
-
-void write64_separately(volatile uint64_t *addr, uint64_t val)
-{
-    volatile uint32_t *ptr = (volatile uint32_t *)addr;
-    *ptr++ = (val >> 32)& 0xffffffff;
-    *ptr = val & 0xffffffff;
-}
-
-uint64_t read64_separately(volatile uint64_t *addr)
-{   
-   volatile uint32_t *ptr = (volatile uint32_t *)addr;
-   return ((uint64_t)*ptr << 32) | *(ptr + 1);
-}
-
-void debug_gicd(void)
-{
-    uint32_t gicd_typer = gic_dist->GICD_TYPER;
-    uint32_t tmp, tmp1;
-    int e_spi_support = gicd_typer & 0x100; //(gicd_typer >> 8) & 1;
-
-    LOG_DEBUG("==================== GICD =======================\n");
-    LOG_DEBUG("GICD_CTLR: %x\n", gic_dist->GICD_CTLR);
-    LOG_DEBUG("SPI num: %d\n", ((gicd_typer & 0x1f) + 1) * 32);
-    LOG_DEBUG("Extended SPI num: %d\n", e_spi_support ? (((gicd_typer >> 27) & 0x1F) + 1) * 32 : 0);
-    LOG_DEBUG("Non-maskable Interrupt support: %s\n", gicd_typer & (1<<9) ? "yes":"no"); 
-    LOG_DEBUG("GICD support: %d security state\n", gicd_typer & (1<<10) ? 2:1);
-    
-    // debug LPI
-    if (gicd_typer & (1u << 17)) {
-      tmp = (gicd_typer >> 11) & 0x1f; 
-      if (tmp == 0) {
-        tmp1 = (gicd_typer >> 19) & 0x1f;
-      } else {
-        tmp1 = (1ULL << (tmp + 1)) - 1;
-      }
-    }else{
-      tmp1 = 0;
-    }
-    LOG_DEBUG("LPI num: %u\n", tmp1); 
-    LOG_DEBUG("write to GICD creates message-based irq support: %s\n", gicd_typer & (1u << 16) ? "yes":"no"); 
-    LOG_DEBUG("Affinity 3 valid: %s\n", gicd_typer & (1u << 24) ? "yes":"no"); 
-    LOG_DEBUG("1 of N SPI support: %s\n", gicd_typer & (1u << 25) ? "no":"yes");
-    LOG_DEBUG("IRI supports targeted SGIs with affinity level 0: %s\n", gicd_typer & (1u << 26) ? "0 - 255":"0 - 15"); 
-}
 
 
 void gic_global_init(int fiq_in_el3, int irq_in_el3, int external_abort_in_el3)
@@ -289,91 +176,7 @@ int gic_set_interrupt_pending(int INTID, uint32_t target_affi)
 }
 
 
-uint64_t debug_its_typer(void)
-{
-    uint64_t its_typer = gic_its->GITS_TYPER;
-    uint32_t tmp;
-    LOG_DEBUG("============== ITS_TYPER ==================\n");
-    LOG_DEBUG("INV(cache disable when invalid): %d\n", (its_typer >> 46) & 1);
-    LOG_DEBUG("UMSIirq support: %d\n", (its_typer >> 45) & 1);
-    LOG_DEBUG("UMSI: %d\n", (its_typer >> 44) & 1);
-    tmp = 16;
-    if (its_typer & (1ul << 36)) {
-        tmp = (its_typer >> 32) & 0xf;
-    }
-    LOG_DEBUG("CLI(Collection ID size ): %d\n",tmp);
-    LOG_DEBUG("HCC(Hardware Collection Count): %d\n",(its_typer >> 24) & 0xff);
-    LOG_DEBUG("PTA(Physical Target Addresses defined by): %s\n", its_typer & (1ul << 19) ? "physical address":"PE Number");
-    LOG_DEBUG("Devbits(DeviceID bits): %d\n", ((its_typer >> 13) & 0x1f) + 1);
-    LOG_DEBUG("ID_bits(EventID bits): %d\n", ((its_typer >> 8) & 0x1f) + 1);
-    LOG_DEBUG("ITT_entry_size(transfer entry): %d\n", ((its_typer >> 4) & 0x1f) + 1);
-    LOG_DEBUG("CCT(Cumulative Collection Tables): %d (choice)\n", (its_typer >> 2) & 1);
-    LOG_DEBUG("supports physical LPI : %d (choice)\n", its_typer & 1);
-    return its_typer;
-}
 
-/** UM MSI,是指没有通过ITS而发送的MSI。MSI可以映射为（一般UM MSI）SPI，也可映射为（通过ITS转换成）LPI
- * 注意64位的寄存器有可能要求是按2个32位来访问的，文档会有描述
- * 表的配置有(0-7共8个表，每个表配置一种table)
- * 1. plat(0), 2-level (1)
- * 2. 有cache属性， 我们选择 0b110，Inner, Read-allocate, Write-allocate, Write-through
- *    外部cache属性：我们选择 1，没有外部cache
- * 3. 共享属性：0b01,设置成内部共享
- * 4. 表类型设置：1:device table; 2:vPES; 4: collections
- * 5. 要读取entry_size来决定每个entry有多大,这个是只读的
- * 6. 设置表的物理地址（低12位为0，但要求和Page size对齐）
- * 7. 定义Page size
- * 8. 本表的大小 n; 表示使用了多少个物理pages，比如n=0,表示 (n+1)个page
- * 9. 使用有效
- * ------------------------------------------------------------------
- * ITS command的环形表
- * 1. 内部和外部的cache属性
- * 2. 共享属性
- * 3. 物理地址（64K对齐，大小要求4K的倍数 [15:12]要求为0b0000）
- * 4. size: 真实的bytes大小为(size+1) *4K
- * --------------------------------------------
- * ITS 控制寄存器
- * 1.可以读取ITS操作是否都已经完成，用于power management
- * 2. UMSIirq。用于控制Unmaped MSI中断是能，这里我们不涉及这种中断，先用0禁用掉
- * 3. ITS_Number:针对GICv4的，用于设置ITS的实例个数。
- * 4. ITS使能
- * 可以判断ITS命令是否完成
- * ---------------------------------------
- * 读写指针的控制，当出现错误后，可以通过读写retry bit位来实现该command的复位
- * 从名字上来看，应该只影响错误的这个command，让其恢复到未写之前的位置
- * 可以通过读GICI_IIDR来识别ITS的base地址是否设置正确
- * 
- * PMG, PARTID是什么用的？
- * ----------------------------------------------------------------
- * ITS SGI 产生一个虚拟的SGI（V4）
- * ITS状态寄存器 GITS_STATUSR，可查看配置错误原因
-*/
-void its_set_lpi_config_table_addr(uint32_t rd, uint64_t addr, uint64_t attributes, uint32_t INTIDbits)
-{
-    // GICI_BASERD[rd] = addr;
-    uint64_t tmp = 0;
-    tmp = (uint64_t)addr;
-    tmp |= (uint64_t)attributes << 32;
-    tmp |= (uint64_t)INTIDbits << 48;
- //   gic_its->GITS_LPICFG[rd] = tmp;
-
-
-}
-
-/**
- * LPI 支持两种类型的中断其中之一：
- * 1. 使用ITS转换的LPI （目前使用这种，物理的ITS至少要有一个用于接收MSI,然后将MSI转化成LPI）
- * 2. 直接使用LPI（这种情况不需要ITS的支持，直接将LPI中断发送到RD）
- * 3. LPI主要通过配置GICR（RD）来实现（支持最小8K的中断个数）
- *    因为中断源多，其相关的配置由table来配合实现，主要是以下两种table（需要在非安全的地址空间来定义）
- *    3.1 实现每个中断的配置（优先级和enable） (全局的 table)
- *        在GICD.DS=0时，LPI总是非安全group1的中断
- *                 =1时，LPI是group1中断
- *        全局配置修改后需要写GICR_INV或GICR_IINVALL命令来实现更新。
- *    3.2 实现每个中断的Pending （每个GICR独有的）
- *    3.3 LPI还有一个enbale位，用于控制RD到PE的LPI通路
- * 
-*/
 int gic_lpi_init(uint32_t rd, uint32_t lpi_id_num)
 {
     //单个的LPI的空间大小由GICR_PROPBASER.ID来决定，整个LPI配置的最大值由GICD_TYPER.IDbits来决定
@@ -424,6 +227,8 @@ int gic_lpi_init(uint32_t rd, uint32_t lpi_id_num)
             ((id_bits - 1) & 0x1f); // & 0x0000FFFFFFFF0000
     gic_rdist[rd].lpis.GICR_PROPBASER = tmp;
     //Note: latter, we will set the priority and enable bits in the prop_table when we use.
+    // enable lpi 
+    gic_rdist[rd].lpis.GICR_CTLR |= 1;
     return 0;
 }
 
@@ -463,14 +268,20 @@ int gic_its_init(uint32_t rd, uint32_t lpi_id_num)
 
     void *table;
     uint64_t config_value;
-    uint32_t size = 1;
-
+    uint32_t size;
+    // size is 2^(DTE.ITTRange + 1)* GITS_TYPER.ITT_entry_size
+    // ITT Range Log2 (EventID width supported by the ITT) minus one
+    // now ITT_RANGE = log2(16) = 4;
+    size = (((its_typer >> 4) & 0x1f) + 1) * 4;
+    size = (size + 4095) >> 12 - 1;
     table = alloc_page_table_aligned(PAGE_ALIGN_64K, size);
     memset(table, 0, size * 4096);
     // Command queue table ...
     config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
          |(0b10 << 10) |  (size -1) | (uint64_t)table;
     write64_separately(&gic_its->GITS_CBASER, config_value);
+    gic_its->GITS_CWRITER = 0;    // This register contains the offset from the start, hence setting to 0
+    dsb();
 
     // FOR DEV table
     // page size is 4k
@@ -544,4 +355,14 @@ int gic_its_init(uint32_t rd, uint32_t lpi_id_num)
     config_value = tmp | ((uint64_t)table | size);
     write64_separately(&gic_its->GITS_BASER[collection_idx], config_value);
     return 0;
+}
+
+
+int gicv3_spi_enable(uint32_t INTID, )
+
+
+
+int config_lpi_int(uint32_t rd, uint32_t intid, uint32_t priority)
+{
+   configureLPI(rd, intid, 1, priority);
 }

@@ -15,21 +15,6 @@
 extern "C" {
 #endif
 
-typedef enum
-{
-    TRIGGER_LEVEL = 0,
-    TRIGGER_EDGE  = 2,
-}irq_trigger_t;
-
-
-typedef enum
-{
-    GROUP0 = 0,
-    GROUP1_NS = 1,
-    GROUP1_S = 2,
-}int_group_t;
-
-typedef void (*irq_handler_t)(void *priv_arg);
 
 
 

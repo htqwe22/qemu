@@ -3,7 +3,7 @@ override CUR_MK_DIR := $(patsubst $(TOP_DIR)/%,%,$(dir $(lastword $(MAKEFILE_LIS
 override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := drv_pl011.o gicv3_basic.o gicv3_lpis.o gicv3_cpuif.o drv_sys_timer.o
+override LOCAL_OBJS := drv_pl011.o drv_gicv3.o gic_its_command.o drv_sys_timer.o 
 
 
 

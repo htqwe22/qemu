@@ -3,7 +3,7 @@ override CUR_MK_DIR := $(patsubst $(TOP_DIR)/%,%,$(dir $(lastword $(MAKEFILE_LIS
 override LOCAL_INCLUDES := .
 override LOCAL_DEFINES := 
 override LOCAL_CFLAGS :=
-override LOCAL_OBJS := el_switch_test.o
+override LOCAL_OBJS := el_switch_test.o interrupt_test.o
 
 
 

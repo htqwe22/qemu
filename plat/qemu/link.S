@@ -28,6 +28,16 @@ SECTIONS
     } > ROM
 
     . = ALIGN(8);
+    _lma_ddr_text = .;
+    .ddr_text : {
+        . = ALIGN(8);
+        ddr_text_start = .;
+        *(*ddr_text);
+        ddr_text_end = .;
+    } > DDR AT > ROM
+
+    . = LOADADDR(.ddr_text) + SIZEOF(.ddr_text);
+    . = ALIGN(8);
     __data_lma_start = .; // or LOADADDR(.data)
     .data : {
         __data_link_start = .; /*or use LOADADDR(.data)*/
@@ -47,11 +57,7 @@ SECTIONS
     *(.rela*)
     __rel_dyn_end = .;
     } > SRAM
-/*    
-    .ns_func :{
-        *(.user.fuc*)
-    } > DDR AT > ROM
-*/
+
     image_end =  LOADADDR(.bss);
     . = ALIGN(8);
     bss_begin = .;
@@ -62,6 +68,7 @@ SECTIONS
     . = ALIGN(8);
     bss_end = .;
     .ddr_data (NOLOAD) : {
+        . = SIZEOF(.ddr_text);
         . = ALIGN(4096);
         *(.page_data*)
         . = ALIGN(8);

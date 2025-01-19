@@ -65,6 +65,13 @@ func master
     sub x2, x2, x0
     bl memcpy_64
 
+    // copy ddr function from LMA to VA
+    ldr x0, =ddr_text_start
+    ldr x1, =_lma_ddr_text
+    ldr x2, =ddr_text_end  
+    sub x2, x2, x0
+    bl memcpy_64
+
     bl main
     b proc_hang
     ret

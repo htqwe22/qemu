@@ -48,6 +48,12 @@ static void soc_reg_debug(void)
 //  LOG_DEBUG("ICC_SRE_EL3: %x, %x, %x\n", getICC_SRE_EL3(), getICC_SRE_EL2(), getICC_SRE_EL1());
 }
 
+SECTION_TEXT_DDR
+void ddr_function(void)
+{
+    LOG_WARN("ddr_function run...\n");
+}
+
 int main(int argc, char **argv)
 {
     //clock init ...
@@ -59,7 +65,7 @@ int main(int argc, char **argv)
     //relocate();
     //init_mmu();
     //init_mmu_el3();
-    
+    ddr_function();
     soc_reg_debug();
 
 

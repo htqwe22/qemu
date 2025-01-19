@@ -18,6 +18,7 @@ extern "C" {
 
 #define SECTION_PAGE    __attribute__((section(".page_data")))
 #define SECTION_DDR     __attribute__((section(".ddr_data")))
+#define SECTION_TEXT_DDR 	__attribute__((section(".ddr_text")))
 
 /*
  * Partition memory into secure ROM, non-secure DRAM, secure "SRAM",

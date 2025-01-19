@@ -55,8 +55,9 @@ void its_interrupt_test(void)
     gicv3_its_init(GICI_BASE);
     uint32_t affinity = getAffinity();
     gicv3_its_register(GICI_BASE, 8192, 2, affinity, 0, 0, 0, test_lpi_interrupt_handler, NULL);
+ //   gicv3_set_lpi_pending(GICI_BASE, affinity, 0, 0);
 
  //   gicv3_send_sgi(GROUP1_S, 2, 0, 1);
     // gic_its_init(0, 1024);
- //   gicv3_set_lpi_pending(GICI_BASE, affinity, 0, 0);
+    
 }

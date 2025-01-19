@@ -56,7 +56,7 @@
 #define heapBITS_PER_BYTE         ( ( size_t ) 8 )
 
 SECTION_DDR
-static uint8_t defaultHeap[ configTOTAL_HEAP_SIZE ] ;
+uint8_t defaultHeap[ configTOTAL_HEAP_SIZE ] ;
 
 
 

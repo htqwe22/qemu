@@ -18,7 +18,7 @@ extern "C" {
 
 int interrupt_init_el3(void);
 
-void interrupt_test(void);
+void its_interrupt_test(void);
 
 
 

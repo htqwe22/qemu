@@ -114,6 +114,7 @@ void its_create_mapd(uint64_t cmd[4], uint32_t dev_id, uint8_t ev_id_bits, uint3
     for (allock_size = 4096; allock_size < all_size; allock_size += 4096);
     // LOG_DEBUG("all_size %d, allock_size %d\n", all_size, allock_size);
     itt_table = alloc_page_table_aligned(PAGE_ALIGN_4K, allock_size >> 12);
+    LOG_DEBUG("ITT table addr %lx- %lx\n", (uint64_t)itt_table, (uint64_t)itt_table + allock_size);
     memset_64(itt_table, 0, allock_size);
     LOG_DEBUG("ITT ev bits is %d, entry size %d, alloc size %u\n", ev_id_bits, itt_entry_size, allock_size);
     cmd_node->ITT_addr = ((uint64_t)itt_table >> 8) & 0xfffffffffffull; //[51:8]
@@ -180,7 +181,7 @@ void its_create_int(uint64_t cmd[4], uint32_t dev_id, uint32_t ev_id)
 }
 
 
-void its_send_command(uint64_t cmd[4], uint64_t its_base)
+void its_send_command(const uint64_t cmd[4], uint64_t its_base)
 {   
     uint32_t queue_size;
     uint64_t new_cwriter, queue_base, queue_offset, queue_read;
@@ -208,7 +209,7 @@ void its_send_command(uint64_t cmd[4], uint64_t its_base)
 
     // Get the address of the next (base + write offset)
     entry = (uint64_t*)(queue_base + queue_offset);
-    LOG_DEBUG("entry %p\n", entry);
+    LOG_DEBUG("entry %p, cmd at %p\n", entry, cmd);
     memcpy_64(entry, cmd, COMMAND_SIZE);
     dsb();
 
@@ -218,4 +219,5 @@ void its_send_command(uint64_t cmd[4], uint64_t its_base)
     gic_its->GITS_CWRITER = new_cwriter; // update write pointer.
     // I DONOT think The next statement is nessary. Kevin.he
     //////// while(gic_its->GITS_CWRITER != gic_its->GITS_CREADR);
+    isb();
 }

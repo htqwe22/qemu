@@ -66,8 +66,8 @@ int main(int argc, char **argv)
 //    mem_map_init();
     interrupt_init_el3();
     switch_to_el1(el1_entry, 0);
- //   sys_timer_init(500000, sys_timer_callback, NULL);
-    interrupt_test();
+    its_interrupt_test();
+    sys_timer_init(500000, sys_timer_callback, NULL);
 
 
     kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);

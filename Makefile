@@ -64,7 +64,7 @@ include $(ARCH_DIR)/firmware.mk
 include $(TEST_DIR)/firmware.mk
 include driver/firmware.mk
 include os/firmware.mk
-include interrupt/firmware.mk
+#include interrupt/firmware.mk
 #include application/firmware.mk
 
 S_OBJS := start.o 

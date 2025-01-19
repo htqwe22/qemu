@@ -35,8 +35,7 @@ void its_create_invall(uint64_t cmd[4], uint32_t collection_id);
 void its_create_int(uint64_t cmd[4], uint32_t dev_id, uint32_t ev_id);
 
 
-
-void its_send_command(uint64_t cmd[4], uint64_t its_base);
+void its_send_command(const uint64_t cmd[4], uint64_t its_base);
 
 
 #ifdef __cplusplus

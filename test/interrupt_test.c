@@ -39,7 +39,8 @@ int interrupt_init_el3(void)
     gicv3_global_init(0, 1, 0);
     gicv3_current_cpu_interface_init();
     gicv3_lpi_enable(affinity, 128);
-    gicv3_its_init(GICI_BASE);
+   
+
     gicv3_spi_register(33, 3, GROUP1_S, TRIGGER_EDGE, affinity, spi_interrupt_handler, NULL);
     gicv3_ppi_register(30, 3, GROUP1_S, TRIGGER_LEVEL, affinity, sys_timer_interrupt_handler, NULL);
     gicv3_sgi_register(2, 5, GROUP1_S, affinity, sgi_interrupt_handler, NULL);
@@ -47,13 +48,15 @@ int interrupt_init_el3(void)
 }
 
 
-void interrupt_test(void)
+void its_interrupt_test(void)
 {
-
- //   gicv3_its_register(GICI_BASE, 8193, 3, getAffinity(), 0, 0, 0, test_lpi_interrupt_handler, NULL);
-    
     gicv3_set_pending(33);
+//   
+    gicv3_its_init(GICI_BASE);
+    uint32_t affinity = getAffinity();
+    gicv3_its_register(GICI_BASE, 8192, 2, affinity, 0, 0, 0, test_lpi_interrupt_handler, NULL);
+
  //   gicv3_send_sgi(GROUP1_S, 2, 0, 1);
     // gic_its_init(0, 1024);
- //   gicv3_set_lpi_pending(GICI_BASE, getAffinity(), 0, 0);
+ //   gicv3_set_lpi_pending(GICI_BASE, affinity, 0, 0);
 }

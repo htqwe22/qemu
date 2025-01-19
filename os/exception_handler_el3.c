@@ -8,6 +8,8 @@
  * Information :
  **********************************************************************************/
 #include <exception_common.h>
+#include <log.h>
+#include <arch_helpers.h>
 
 void el3_sync_handler(uint64_t offset)
 {
@@ -31,10 +33,15 @@ void el3_irq_handler(uint64_t offset)
 
 void el3_fiq_handler(uint64_t offset)
 {
-    uint64_t FP;
-    asm volatile ("mov %0, fp\n" : "=r" (FP));
-    excep_info(offset, 3);
-    debug_callstack((void *)FP);
+    uint32_t INTID = (uint32_t)read_icc_iar0_el1() & 0xffffff;
+    LOG_DEBUG("Get FIQ id %d\n", INTID);
+    if (INTID == 1021) {
+
+    }else if (INTID == 1020) {
+        
+    }
+    write_icc_eoir0_el1(INTID); // end of interrupt
+//    excep_info(offset, 3);
 }
 
 

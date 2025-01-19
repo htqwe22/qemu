@@ -201,7 +201,8 @@ struct GICv3_its_ctlr_if
   const volatile uint32_t GITS_MPIDR;            // +0x0018 - RO - ITS affinity, used for shared vPE table
   const volatile uint32_t padding5;              // +0x001C - RESERVED
         volatile uint32_t GITS_IMPDEF[8];        // +0x0020 - RW - IMP DEF registers
-  const volatile uint32_t padding2[16];          // +0x0040 - RESERVED
+  const volatile uint32_t GITS_STATUSR;          // +0x0040 - RO - ITS status ...
+  const volatile uint32_t padding2[15];          // +0x0044 - RESERVED
         volatile uint64_t GITS_CBASER;           // +0x0080 - RW - Sets base address of ITS command queue
         volatile uint64_t GITS_CWRITER;          // +0x0088 - RW - Points to next enrty to add command
         volatile uint64_t GITS_CREADR;           // +0x0090 - RW - Points to command being processed

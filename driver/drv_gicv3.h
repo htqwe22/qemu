@@ -34,6 +34,15 @@ typedef enum
 
 typedef void (*irq_handler_t)(void *priv_arg);
 
+// Note: in implementation, ITS_PAGE_SIZE may RO
+#ifndef FIXED_PAGE_SIZE
+#define ITS_PAGE_SIZE   (4096) //4KB
+#endif
+
+#define USED_DEV_ID_BITS    4
+#define USED_EV_ID_BITS     4
+
+
 int gicv3_global_init(bool irq_in_el3, bool fiq_in_el3, bool external_abort_in_el3);
 
 
@@ -42,6 +51,7 @@ int gicv3_current_cpu_interface_init(void);
 
 int gicv3_lpi_enable(uint32_t affinity, uint32_t max_lpi_num);
 
+void gicv3_its_enable(uint64_t its_base, bool en);
 
 int gicv3_its_init(uint64_t its_base);
 

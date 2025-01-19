@@ -182,17 +182,15 @@ uint64_t debug_its_typer(uint64_t its_base)
     return its_typer;
 }
 
-void write64_separately(volatile uint64_t *addr, uint64_t val)
+void write64_separately(volatile uint32_t *addr, uint64_t val)
 {
-    volatile uint32_t *ptr = (volatile uint32_t *)addr;
-    *ptr++ = (val >> 32)& 0xffffffff;
-    *ptr = val & 0xffffffff;
+    *addr++ = val & 0xffffffff;
+    *addr = (val >> 32)& 0xffffffff;
 }
 
-uint64_t read64_separately(volatile uint64_t *addr)
-{   
-   volatile uint32_t *ptr = (volatile uint32_t *)addr;
-   return ((uint64_t)*ptr << 32) | *(ptr + 1);
+uint64_t read64_separately(volatile uint32_t *addr)
+{
+    return addr[0] | (uint64_t)addr[1] << 32;
 }
 
 
@@ -294,8 +292,8 @@ void gicv3_lpi_set_priority(uint32_t INTID, uint32_t affinity, uint8_t priority)
     // Note: bit 1 is RES1
     prop_table[INTID - 8192] = config;
     dsb();
-    //set GICR_INVPIR from cache
-    gic_rdist[rd].lpis.GICR_INVLPIR = INTID;
+    // set GICR_INVPIR from cache. The Next statement may causes bugs.
+    // gic_rdist[rd].lpis.GICR_INVLPIR = INTID;
 }
 
 
@@ -318,7 +316,7 @@ int gicv3_global_init(bool irq_in_el3, bool fiq_in_el3, bool external_abort_in_e
     {
         gic_max_rd++;
     }
-    LOG_DEBUG("get max rd num %d\n", gic_max_rd);
+//    LOG_DEBUG("get max rd num %d\n", gic_max_rd);
     /**
      *  GICD_CTLR AES = 1
      *  1. ARE_S/NS = 1 to use All GICv3
@@ -425,17 +423,19 @@ int gicv3_lpi_enable(uint32_t affinity, uint32_t max_lpi_num)
 
     uint32_t max_id = 8192 + max_lpi_num;
     uint32_t num;
+
+    // 1. set GICR_PENDBASER
     for (num = 1; max_id > num * (4096 << 3); num++);
     void *p_table = alloc_page_table_aligned(PAGE_ALIGN_64K, num);
     // Clear pending table
+ //   LOG_DEBUG("p_table at %p\n", p_table);
     memset_64(p_table, 0, num * 4096);
 
-    // 1. set GICR_PENDBASER
     // 0b110 cacheable, write-allocate, read-allocate, write-through
     // 0b01 at bit10; Inner Shareable
     tmp = (0b110ull << 7) | (0b01ull << 10) | (uint64_t)p_table; // & 0x0000FFFFFFFF0000
     gic_rdist[rd].lpis.GICR_PENDBASER = tmp;
-
+//    LOG_DEBUG("LPI Pending base %lx\n", gic_rdist[rd].lpis.GICR_PENDBASER);
     // set GICR_PROPBASER for eatch rd. and use the same prop_table.
     for (num = 1; max_lpi_num > 4096 * num; num++);
     static void *sh_prop_table = NULL;
@@ -449,7 +449,9 @@ int gicv3_lpi_enable(uint32_t affinity, uint32_t max_lpi_num)
     tmp = (0b110ull << 56) | (0b110ull << 7) | (0b10ull << 10) | (uint64_t)sh_prop_table;
     for (num = 14; (1ull << num) < max_id; num++);
     gic_rdist[rd].lpis.GICR_PROPBASER = tmp | (num - 1);
-
+    // LOG_DEBUG("table at %p\n", sh_prop_table);
+    // LOG_DEBUG("LPI prob base %lx\n", gic_rdist[rd].lpis.GICR_PROPBASER);
+    
     // SET 1 of N for eatch group and enable
     num = (0b111u << 24) | 1;
     gic_rdist[rd].lpis.GICR_CTLR = num;
@@ -464,22 +466,22 @@ int gicv3_its_init(uint64_t its_base)
     uint32_t idx, dev_idx = 0xff, collection_idx = 0xff;
     uint32_t type;
     uint32_t entry_size, dev_entry_size, collection_entry_size;
+    uint32_t pg_value = 0; //default 4KB
 
     // 1. set its base address
     struct GICv3_its_ctlr_if* gic_its = (struct GICv3_its_ctlr_if *)its_base;
     its_typer = gic_its->GITS_TYPER;
     LOG_DEBUG("its_typer %#x\n", its_typer);
     // 2. CTLR setting ...
-    tmp = (gic_its->GITS_CTLR >> 4) & 0x0f;
-    LOG_DEBUG("its num %d\n", tmp);
+//    tmp = (gic_its->GITS_CTLR >> 4) & 0x0f;
+//    LOG_DEBUG("its num %d\n", tmp);
     gic_its->GITS_CTLR = 0; // nothing to be configured.
 
     //3 configure device table & connection type
     for (idx = 0; idx < 8; idx++) {
         type = (uint32_t)(0x7  & (gic_its->GITS_BASER[idx] >> 56));
         entry_size = (uint32_t)(0x1F & (gic_its->GITS_BASER[idx] >> 48));
-
-        LOG_DEBUG("idx %d, type %d, pg_size %d, entry_size %d\n", idx, type, (gic_its->GITS_BASER[idx] >> 8) & 3, entry_size);
+//        LOG_DEBUG("idx %d, type %d, pg_size %d, entry_size %d\n", idx, type, (gic_its->GITS_BASER[idx] >> 8) & 3, entry_size);
         if (type == 1) {
             dev_idx = idx;
             dev_entry_size = entry_size + 1;
@@ -496,8 +498,10 @@ int gicv3_its_init(uint64_t its_base)
     }
 
     void *table;
-    uint32_t page_size = (gic_its->GITS_BASER[dev_idx] >> 8) & 3;
-    switch(page_size) {
+    uint32_t page_size;
+#ifdef FIXED_PAGE_SIZE
+    pg_value = (gic_its->GITS_BASER[dev_idx] >> 8) & 3;
+    switch(pg_value) {
         case 0:
             page_size = 4*KB;
             break;
@@ -509,21 +513,33 @@ int gicv3_its_init(uint64_t its_base)
             page_size = 64*KB;
             break;
     }
+#else
+    page_size = ITS_PAGE_SIZE;
+#endif
     // 3.1 configure device table
     uint32_t id_bits;
     id_bits = ((its_typer >> 13) & 0x1f) + 1; // devid bits
-    LOG_DEBUG("Device ID bits is %d, page size %d, entry size %d\n", id_bits, page_size, dev_entry_size);
+    if (id_bits < USED_DEV_ID_BITS) {
+        LOG_ERROR("defined ID bits > supported id bits(%u)\n", id_bits);
+        return -2;
+    }
+    id_bits = USED_DEV_ID_BITS;
+//    LOG_DEBUG("Device ID bits is %d, page size %d, entry size %d\n", id_bits, page_size, dev_entry_size);
     tmp = (1ul << id_bits) * dev_entry_size; // all device table size in bytes;
     idx = (tmp + page_size - 1) / page_size; // pages number.
     table = alloc_page_table_aligned(page_size >> 12, idx * page_size/4096); 
+ //   LOG_DEBUG("DEV table at %p-%x(size %u)\n", table, (uint64_t)table + idx * page_size, idx * page_size);
     memset_64(table, 0, idx * page_size); //clean the table
     // Command queue table ...
     config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
          |(0b10 << 10) |  (idx -1) | (uint64_t)table;
-    write64_separately(&gic_its->GITS_BASER[dev_idx], config_value);
+    write64_separately((volatile uint32_t *)&gic_its->GITS_BASER[dev_idx], config_value);
     dsb();
+    isb();
+ //   LOG_DEBUG("DEV configure %lx\n", gic_its->GITS_BASER[dev_idx]);
     
     // 3.2 Collection table ..
+#ifdef FIXED_PAGE_SIZE
     page_size = (gic_its->GITS_BASER[collection_idx] >> 8) & 3;
     switch(page_size) {
         case 0:
@@ -537,42 +553,48 @@ int gicv3_its_init(uint64_t its_base)
             page_size = 64*KB;
             break;
     }
+#else
+    page_size = ITS_PAGE_SIZE;
+#endif
     if (its_typer & (1ull << 36)) {
         id_bits = ((its_typer >> 32) & 0xf) + 1; // devid bits
     }else{
         id_bits = 16;
     }
-    LOG_DEBUG("Collection ID bits is %d, page size %d, entry size %d\n", id_bits, page_size, collection_entry_size);
+    if (id_bits < USED_DEV_ID_BITS) {
+        LOG_ERROR("defined ID bits > supported id bits(%u)\n", id_bits);
+        return -2;
+    }
+    id_bits = USED_DEV_ID_BITS;
+
+ //   LOG_DEBUG("Collection ID bits is %d, page size %d, entry size %d\n", id_bits, page_size, collection_entry_size);
     tmp = (1ul << id_bits) * collection_entry_size; // all device table size in bytes;
     idx = (tmp + page_size - 1) / page_size; // pages number.
     table = alloc_page_table_aligned(page_size >> 12, idx * page_size/4096); 
+ //   LOG_DEBUG("Collection table at %p-%x (size %u)\n", table, (uint64_t)table + idx * page_size, idx * page_size);
     memset_64(table, 0, idx * page_size); //clean the table
     // Command collection table ...
     config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
          |(0b10 << 10) |  (idx -1) | (uint64_t)table;
-    write64_separately(&gic_its->GITS_BASER[collection_idx], config_value);
+    write64_separately((volatile uint32_t *)&gic_its->GITS_BASER[collection_idx], config_value);
     dsb();
+//    LOG_DEBUG("Collection configure %lx\n", gic_its->GITS_BASER[collection_idx]);
 
     //4. configure command queue need 64 K aligned ....
     idx = 1;
     table = alloc_page_table_aligned(PAGE_ALIGN_64K, idx); 
-    LOG_DEBUG("command table addr %lx\n", (uint64_t)table);
+ //   LOG_DEBUG("command table addr %lx- %lx\n", (uint64_t)table, (uint64_t)table + 4096);
     memset_64(table, 0, idx * 4096); //clean the table  
     config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
          |(0b10 << 10) |  (idx -1) | (uint64_t)table;
-    write64_separately(&gic_its->GITS_CBASER, config_value);
+    write64_separately((volatile uint32_t *)&gic_its->GITS_CBASER, config_value);
     gic_its->GITS_CWRITER = 0;    // This register contains the offset from the start, hence setting to 0
     dsb();
- 
+//    LOG_DEBUG("comand configure %lx\n", gic_its->GITS_CBASER);
     //5.enable its
-    LOG_DEBUG("ITS Quiescent = %d\n", gic_its->GITS_CTLR >> 31);
-    while ((gic_its->GITS_CTLR >> 31) == 0); 
-
     gic_its->GITS_CTLR |= 1;
-    dsb();
     return 0;
 }
-
 
 /**
  * trigger & target_affi is only valid for SPI
@@ -687,7 +709,7 @@ int gicv3_sgi_register(uint32_t INTID, uint8_t priority, int_group_t group, uint
 int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, uint32_t target_affi,  \
     uint32_t dev_id, uint32_t ev_id, uint32_t collect_id, irq_handler_t handler, void *priv_arg)
 {
-    if (INTID < 8193) {
+    if (INTID < 8192) {
         LOG_ERROR("ITS ID %d is not supported\n", INTID);
         return -1;
     }
@@ -701,15 +723,18 @@ int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, uint
     uint32_t itt_entry_size = ((gic_its->GITS_TYPER >> 4) & 0x1f) + 1;
     LOG_DEBUG("intid %d, itt_entry_size %d\n", INTID, itt_entry_size);
     // MAPD dev_id
-    its_create_mapd(cmd, dev_id, 8, itt_entry_size);
+    its_create_mapd(cmd, dev_id, USED_EV_ID_BITS, itt_entry_size);
     its_send_command(cmd, its_base);
+
     // MAPTI
     its_create_mapti(cmd, dev_id, ev_id, INTID, collect_id);
     its_send_command(cmd, its_base);
-    // MAPTC
 
+
+    // MAPTC
     uint64_t rdBase;
     //The RDbase field consists of bits[51:16] of the address
+    // check GITS_TYPER.PTA bit
     if (gic_its->GITS_TYPER & (1ull << 19))
         rdBase = (uint64_t) &gic_rdist[rd] & 0xfffffffff0000ull; 
     else
@@ -721,6 +746,26 @@ int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, uint
     its_send_command(cmd, its_base);
     isb();
     return 0;
+}
+
+
+void gicv3_its_enable(uint64_t its_base, bool en)
+{
+    struct GICv3_its_ctlr_if* gic_its = (struct GICv3_its_ctlr_if *)its_base;
+ //   while ((gic_its->GITS_CTLR >> 31) == 0); 
+ //   LOG_DEBUG("gic_its->GITS_CTLR = %lx at %p\n", gic_its->GITS_CTLR, &gic_its->GITS_CTLR);
+    if (en)
+        gic_its->GITS_CTLR |= 1;
+    else
+        gic_its->GITS_CTLR &= ~1u;
+    dsb();
+}
+
+void gicv3_debug_its_status(uint64_t its_base)
+{
+    struct GICv3_its_ctlr_if* gic_its = (struct GICv3_its_ctlr_if *)its_base;
+    uint32_t status = gic_its->GITS_STATUSR;
+    LOG_DEBUG("its status %#x\n", status);
 }
 
 

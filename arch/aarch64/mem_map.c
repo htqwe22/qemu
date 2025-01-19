@@ -127,6 +127,11 @@ void debug_mmu_registers(void)
     // LOG_DEBUG("scr_el3: %016lx\n", val);
 }
 
+void page_table_init(void)
+{
+    memset_64(alloc_flag_table, 0, sizeof(alloc_flag_table));
+}
+
 struct page_table_4k *alloc_page_table(void)
 {
     int i = 0;
@@ -150,7 +155,7 @@ struct page_table_4k *alloc_page_table(void)
 
 void *alloc_page_table_aligned(page_align_t align, int num_of_4K)
 {
-    int i = 0;
+    int i = 0, j;
     uint16_t end_idx;
     for (i = 0; i < TABLE_NR; i += align) {
         if (alloc_flag_table[i].valid) {
@@ -158,15 +163,16 @@ void *alloc_page_table_aligned(page_align_t align, int num_of_4K)
         }
         end_idx = i + num_of_4K;
 
-        for (int j = i; j < end_idx; j++) {
-            if (j >= TABLE_NR)
+        for (j = i; j < end_idx; j++) {
+            if (j >= TABLE_NR || alloc_flag_table[j].valid == 1) {
                 break;
-            if (alloc_flag_table[j].valid == 1) {
-                continue;
             }
         }
+        if (j != end_idx) {
+            continue;
+        }
         // find a sequential memory
-        for (int j = i; j < end_idx; j++) {
+        for (j = i; j < end_idx; j++) {
             alloc_flag_table[j].valid = 1;
             if (j == i) {
                 alloc_flag_table[j].num = num_of_4K;

@@ -192,6 +192,7 @@ void its_send_command(uint64_t cmd[4], uint64_t its_base)
     queue_base = (gic_its->GITS_CBASER & (uint64_t)0x0000FFFFFFFFF000);
     queue_offset = gic_its->GITS_CWRITER;  // GITS_CWRITER contains the offset
     queue_read   = gic_its->GITS_CREADR;
+    LOG_DEBUG("queue size %d, base %lx, offset %lx, read %lx\n", queue_size, queue_base, queue_offset, queue_read);
 #if 0
     // Check that the queue is not full
     if (queue_read == 0)
@@ -207,6 +208,7 @@ void its_send_command(uint64_t cmd[4], uint64_t its_base)
 
     // Get the address of the next (base + write offset)
     entry = (uint64_t*)(queue_base + queue_offset);
+    LOG_DEBUG("entry %p\n", entry);
     memcpy_64(entry, cmd, COMMAND_SIZE);
     dsb();
 

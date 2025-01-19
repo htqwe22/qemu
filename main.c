@@ -19,6 +19,7 @@
 #include <asm_func.h>
 #include <drv_sys_timer.h>
 #include <drv_gicv3.h>
+#include <mem_map.h>
 #include <kvos.h>
 
 
@@ -36,6 +37,13 @@ static void spi_interrupt_handler(void *arg)
 {
     LOG_INFO("spi interrupt handler\n");
 }
+
+
+void test_lpi_interrupt_handler(void *arg)
+{
+    LOG_INFO("lpi interrupt\n");
+}
+
 int main(int argc, char **argv)
 {
     
@@ -44,6 +52,7 @@ int main(int argc, char **argv)
     //init_ddr();
     set_exception_table_el3();
     set_exception_table_el1_s();
+    page_table_init();
     //relocate();
     //init_mmu();
     //init_mmu_el3();
@@ -60,20 +69,25 @@ int main(int argc, char **argv)
     LOG_INFO("image end at %lu, bss_start at %lu\n", (uint64_t)&image_end, (uint64_t)&bss_begin);
 //  LOG_DEBUG("ICC_SRE_EL3: %x, %x, %x\n", getICC_SRE_EL3(), getICC_SRE_EL2(), getICC_SRE_EL1());
 //    mem_map_init();
-    // gic_global_init(1, 0, 0);
-    // gic_current_pe_init();
-    // gic_configure_interrupt(30, 3, GROUP1_S, TRIGGER_LEVEL, getAffinity(), sys_timer_interrupt_handler, NULL);
-    // gic_configure_interrupt(33, 3, GROUP1_S, TRIGGER_EDGE, getAffinity(), spi_interrupt_handler, NULL);
+    uint32_t affinity = getAffinity(); //read from MPIDR_EL1
+    gicv3_global_init(0, 1, 0);
+    gicv3_current_cpu_interface_init();
+    // gicv3_lpi_enable(affinity, 128);
+    // gicv3_its_init(GICI_BASE);
+
+    gicv3_spi_register(33, 3, GROUP1_S, TRIGGER_EDGE, getAffinity(), spi_interrupt_handler, NULL);
+    gicv3_ppi_register(30, 3, GROUP1_S, TRIGGER_LEVEL, getAffinity(), sys_timer_interrupt_handler, NULL);
+ //   gicv3_its_register(GICI_BASE, 8193, 3, getAffinity(), 0, 0, 0, test_lpi_interrupt_handler, NULL);
     
-    // switch_to_el1(el1_entry, 0);
-    // sys_timer_init(500000, sys_timer_callback, NULL);
-    // gic_set_interrupt_pending(33, getAffinity());
-
+    switch_to_el1(el1_entry, 0);
+  //  sys_timer_init(500000, sys_timer_callback, NULL);
+    gicv3_set_pending(33);
+    
     // gic_its_init(0, 1024);
-
-   kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);
-   kv_thread_create("subTask", 0x1000, NULL, 1, second_task, NULL);
-   task_start_schedule();
+ //   gicv3_set_lpi_pending(GICI_BASE, getAffinity(), 0, 0);
+    kv_thread_create("mainThread", 0x1000, NULL, 1, main_task, NULL);
+    kv_thread_create("subTask", 0x1000, NULL, 1, second_task, NULL);
+    task_start_schedule();
     for (;;);
     return 0;
 }

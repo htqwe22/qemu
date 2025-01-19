@@ -34,16 +34,35 @@ typedef enum
 
 typedef void (*irq_handler_t)(void *priv_arg);
 
+int gicv3_global_init(bool irq_in_el3, bool fiq_in_el3, bool external_abort_in_el3);
 
 
+int gicv3_current_cpu_interface_init(void);
 
 
+int gicv3_lpi_enable(uint32_t affinity, uint32_t max_lpi_num);
 
 
+int gicv3_its_init(uint64_t its_base);
 
 
+int gicv3_spi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_trigger_t trigger, uint32_t target_affi, irq_handler_t handler, void *priv_arg);
 
+int gicv3_ppi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_trigger_t trigger, uint32_t target_affi, irq_handler_t handler, void *priv_arg);
 
+int gicv3_sgi_register(uint32_t INTID, uint8_t priority, int_group_t group, uint32_t target_affi, irq_handler_t handler, void *priv_arg);
+
+int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, uint32_t target_affi,  \
+    uint32_t dev_id, uint32_t ev_id, uint32_t collect_id, irq_handler_t handler, void *priv_arg);
+/**
+ * only for spi, ppi, sgi
+ * @param affinity: only used for ppi, sgi
+*/
+void gicv3_set_pending(uint32_t INTID);
+
+void gicv3_set_lpi_pending(uint64_t its_base, uint32_t target_affi, uint32_t dev_id, uint32_t event_id);
+
+void gicv3_send_sgi(int_group_t group, uint32_t INTID, uint32_t target_affi, uint16_t list_bitmap);
 
 #ifdef __cplusplus
 }

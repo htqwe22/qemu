@@ -34,7 +34,8 @@
         "string_view": "c",
         "utility": "c",
         "app_int.h": "c",
-        "gic_its_command.h": "c"
+        "gic_its_command.h": "c",
+        "drv_gicv3.h": "c"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }

@@ -101,10 +101,11 @@ static uint32_t gic_max_rd = 0;
 uint32_t getRedistID(uint32_t affinity)
 {
     uint32_t index = 0;
-    for (index = 0; index < gic_max_rd; index++) {
+    do {
         if (gic_rdist[index].lpis.GICR_TYPER[1] == affinity)
-        return index;
-    }
+            return index;
+        index++;
+    }while(index < gic_max_rd);
     LOG_ERROR("Can not find RD by affinity %#x\n", affinity);
     return 0xFFFFFFFF; // return -1 to signal not RD found
 }
@@ -317,7 +318,7 @@ int gicv3_global_init(bool irq_in_el3, bool fiq_in_el3, bool external_abort_in_e
     {
         gic_max_rd++;
     }
-
+    LOG_DEBUG("get max rd num %d\n", gic_max_rd);
     /**
      *  GICD_CTLR AES = 1
      *  1. ARE_S/NS = 1 to use All GICv3
@@ -463,10 +464,11 @@ int gicv3_its_init(uint64_t its_base)
     uint32_t idx, dev_idx = 0xff, collection_idx = 0xff;
     uint32_t type;
     uint32_t entry_size, dev_entry_size, collection_entry_size;
+
     // 1. set its base address
     struct GICv3_its_ctlr_if* gic_its = (struct GICv3_its_ctlr_if *)its_base;
     its_typer = gic_its->GITS_TYPER;
-
+    LOG_DEBUG("its_typer %#x\n", its_typer);
     // 2. CTLR setting ...
     tmp = (gic_its->GITS_CTLR >> 4) & 0x0f;
     LOG_DEBUG("its num %d\n", tmp);
@@ -485,12 +487,12 @@ int gicv3_its_init(uint64_t its_base)
             collection_idx = idx;
             collection_entry_size = entry_size + 1;
         }
-        if (dev_idx != 0xff && collection_idx != 0xff)
-            break;
+       if (dev_idx != 0xff && collection_idx != 0xff)
+           break;
     }
     if (idx == 8) {
         LOG_ERROR("get its table type failed\n");
-        return -1;
+       return -1;
     }
 
     void *table;
@@ -545,7 +547,7 @@ int gicv3_its_init(uint64_t its_base)
     idx = (tmp + page_size - 1) / page_size; // pages number.
     table = alloc_page_table_aligned(page_size >> 12, idx * page_size/4096); 
     memset_64(table, 0, idx * page_size); //clean the table
-    // Command queue table ...
+    // Command collection table ...
     config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
          |(0b10 << 10) |  (idx -1) | (uint64_t)table;
     write64_separately(&gic_its->GITS_BASER[collection_idx], config_value);
@@ -554,6 +556,7 @@ int gicv3_its_init(uint64_t its_base)
     //4. configure command queue need 64 K aligned ....
     idx = 1;
     table = alloc_page_table_aligned(PAGE_ALIGN_64K, idx); 
+    LOG_DEBUG("command table addr %lx\n", (uint64_t)table);
     memset_64(table, 0, idx * 4096); //clean the table  
     config_value = (1ull << 63) | (0b110ull << 59) | (0b110ull << 53) \
          |(0b10 << 10) |  (idx -1) | (uint64_t)table;
@@ -562,6 +565,9 @@ int gicv3_its_init(uint64_t its_base)
     dsb();
  
     //5.enable its
+    LOG_DEBUG("ITS Quiescent = %d\n", gic_its->GITS_CTLR >> 31);
+    while ((gic_its->GITS_CTLR >> 31) == 0); 
+
     gic_its->GITS_CTLR |= 1;
     dsb();
     return 0;
@@ -574,8 +580,11 @@ int gicv3_its_init(uint64_t its_base)
 int gicv3_spi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_trigger_t trigger, uint32_t target_affi, irq_handler_t handler, void *priv_arg)
 {
     // only SPI support .. (Not include SPI-E)
-    if (INTID < 32  || INTID > 1020)
+    if (INTID < 32  || INTID > 1020) {
+        LOG_ERROR("SPI ID %d is not supported\n", INTID);
         return -1;
+    }
+
     uint64_t tmp64;
     uint32_t tmp, idx, offset;
     local_register_irq_handler(INTID, handler, priv_arg);
@@ -622,7 +631,7 @@ int gicv3_spi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_
     tmp64 = (uint64_t)(target_affi & 0x00FFFFFF) |
         (((uint64_t)target_affi & 0xFF000000) << 8) |
           (uint64_t)0b0 << 30;
-    gic_dist->GICD_IGROUPRE[INTID] = tmp64;
+    gic_dist->GICD_ROUTER[INTID] = tmp64;
 
     //5. enable SPI
     gicv3_spi_enable(INTID, 1);
@@ -633,8 +642,10 @@ int gicv3_spi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_
 int gicv3_ppi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_trigger_t trigger, uint32_t target_affi, irq_handler_t handler, void *priv_arg)
 {
     uint32_t rd;
-    if (INTID < 16  || INTID > 31)
+    if (INTID < 16  || INTID > 31) {
+        LOG_ERROR("PPI ID %d is not supported\n", INTID);
         return -1;
+    }
     rd = getRedistID(target_affi);
     local_register_irq_handler(INTID, handler, priv_arg);
     //1. set the interrupt priority
@@ -655,8 +666,10 @@ int gicv3_ppi_register(uint32_t INTID, uint8_t priority, int_group_t group, irq_
 int gicv3_sgi_register(uint32_t INTID, uint8_t priority, int_group_t group, uint32_t target_affi, irq_handler_t handler, void *priv_arg)
 {
     uint32_t rd = getRedistID(target_affi);
-    if (INTID < 16  || INTID > 31)
+    if (INTID > 15) {
+        LOG_ERROR("SGI ID %d is not supported\n", INTID);
         return -1;
+    }
     local_register_irq_handler(INTID, handler, priv_arg);
     //1. set the interrupt priority
     set_sgi_ppi_priorty(rd, INTID, priority);
@@ -671,11 +684,14 @@ int gicv3_sgi_register(uint32_t INTID, uint8_t priority, int_group_t group, uint
     return 0;
 }
 
-int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, int_group_t group, uint32_t target_affi,  \
+int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, uint32_t target_affi,  \
     uint32_t dev_id, uint32_t ev_id, uint32_t collect_id, irq_handler_t handler, void *priv_arg)
 {
-    if (INTID < 16  || INTID > 31)
+    if (INTID < 8193) {
+        LOG_ERROR("ITS ID %d is not supported\n", INTID);
         return -1;
+    }
+
     uint64_t cmd[4];
     struct GICv3_its_ctlr_if* gic_its = (struct GICv3_its_ctlr_if *)its_base;
     uint32_t rd = getRedistID(target_affi);
@@ -703,7 +719,53 @@ int gicv3_its_register(uint64_t its_base, uint32_t INTID, uint8_t priority, int_
 
     its_create_sync(cmd, rdBase);
     its_send_command(cmd, its_base);
+    isb();
     return 0;
+}
+
+
+void gicv3_set_pending(uint32_t INTID)
+{
+    uint32_t idx, offset;
+    if (INTID < 32) { // sgi, ppi
+        gic_rdist->sgis.GICR_ISPENDR[0] |=  (1u << INTID);
+    }else if (INTID <= 1020) { //SPI
+        idx = INTID >> 5;
+        offset = INTID & 0x1f;
+        gic_dist->GICD_ICPENDR[idx] |= (1 << offset);
+    }else {
+        LOG_ERROR("INTID %d is not supported\n", INTID);
+    }
+}
+
+void gicv3_send_sgi(int_group_t group, uint32_t INTID, uint32_t target_affi, uint16_t list_bitmap)
+{
+    uint64_t tmp;
+    tmp = ((uint64_t)target_affi & 0xff000000) << 24 | ((uint64_t)target_affi & 0xff0000) << 16 |  (target_affi & 0xff00) << 8;
+    // Set RS = 0,  TargetList[n] represents aff0 value ((RS * 16) + n).
+    // set IRM = 0,  Aff3.Aff2.Aff1.<target list>.
+    tmp |= (INTID << 24) & 0xf;
+    // target list is 0b101 means the PE whos affinity value is 0 & 2 will recive this interrupt.
+    tmp |= list_bitmap;
+
+    if (group == GROUP0) {
+        write_icc_sgi0r_el1(tmp);
+    }else if (group == GROUP1_S) {
+        write_icc_sgi1r(tmp);
+    }else if (group == GROUP1_NS) {
+        //TODO .. change SCR_EL3 NS = 1
+    }else {
+        LOG_ERROR("group %d is not supported\n", group);
+    }
+}
+
+void gicv3_set_lpi_pending(uint64_t its_base, uint32_t target_affi, uint32_t dev_id, uint32_t event_id)
+{
+    uint64_t cmd[4];
+ //   struct GICv3_its_ctlr_if* gic_its = (struct GICv3_its_ctlr_if *)its_base;
+ //   uint32_t rd = getRedistID(target_affi);
+    its_create_int(cmd, dev_id, event_id);
+    its_send_command(cmd, its_base);
 }
 
 

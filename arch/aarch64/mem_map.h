@@ -38,7 +38,7 @@ extern "C" {
 #define UART_CR         (UART_BASE+0x30)
 #define UART_IMSC       (UART_BASE+0x38)
 
-
+void page_table_init(void);
 
 void create_4k_mapping(int el, uint64_t pa, uint64_t va, uint64_t size, uint64_t attrs);
 

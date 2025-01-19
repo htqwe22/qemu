@@ -732,7 +732,7 @@ void gicv3_set_pending(uint32_t INTID)
     }else if (INTID <= 1020) { //SPI
         idx = INTID >> 5;
         offset = INTID & 0x1f;
-        gic_dist->GICD_ICPENDR[idx] |= (1 << offset);
+        gic_dist->GICD_ISPENDR[idx] |= (1 << offset);
     }else {
         LOG_ERROR("INTID %d is not supported\n", INTID);
     }

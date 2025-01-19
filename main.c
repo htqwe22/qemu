@@ -80,7 +80,7 @@ int main(int argc, char **argv)
  //   gicv3_its_register(GICI_BASE, 8193, 3, getAffinity(), 0, 0, 0, test_lpi_interrupt_handler, NULL);
     
     switch_to_el1(el1_entry, 0);
-  //  sys_timer_init(500000, sys_timer_callback, NULL);
+    sys_timer_init(500000, sys_timer_callback, NULL);
     gicv3_set_pending(33);
     
     // gic_its_init(0, 1024);
